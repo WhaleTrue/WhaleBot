@@ -1,0 +1,622 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "whalemesh.node/v1"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "maxLength": 63,
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 63,
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+        },
+        "instance_id": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]*$"
+        },
+        "host_id": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 0
+        },
+        "principal": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]*$"
+        },
+        "labels": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "maxProperties": 64,
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 0
+          }
+        },
+        "annotations": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "maxProperties": 64,
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 0
+          }
+        }
+      },
+      "required": [
+        "namespace",
+        "name",
+        "instance_id",
+        "principal"
+      ]
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocols": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 8,
+          "items": {
+            "enum": [
+              "http",
+              "https",
+              "yamux"
+            ]
+          }
+        },
+        "listen": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "advertise": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "reachability": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 0
+        },
+        "security": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 0
+        }
+      },
+      "required": [
+        "protocols",
+        "advertise"
+      ]
+    },
+    "provides": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/capability"
+      }
+    },
+    "requires": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/requirement"
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "alive": {
+          "type": "boolean"
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "draining": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "alive",
+        "ready",
+        "draining"
+      ]
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "identity": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]*$"
+        },
+        "trust_namespace": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]*$"
+        },
+        "authentication": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 0
+          }
+        },
+        "permissions": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^(\\*|[A-Za-z0-9][A-Za-z0-9._:/*-]*)$"
+          }
+        }
+      },
+      "required": [
+        "identity",
+        "trust_namespace"
+      ]
+    },
+    "metadata": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 4096,
+        "minLength": 0
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "identity",
+    "transport",
+    "provides",
+    "requires",
+    "lifecycle",
+    "security"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://whalemesh.dev/schemas/node.schema.json",
+  "$defs": {
+    "semantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "read_only": {
+          "type": "boolean"
+        },
+        "idempotent": {
+          "type": "boolean"
+        },
+        "mutating": {
+          "type": "boolean"
+        },
+        "side_effecting": {
+          "type": "boolean"
+        },
+        "streaming": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "read_only",
+        "idempotent",
+        "mutating",
+        "side_effecting",
+        "streaming"
+      ]
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "whalemesh.capability/v1"
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]*$"
+        },
+        "interface": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]*$"
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+        },
+        "endpoint": {
+          "type": "string",
+          "maxLength": 2048,
+          "minLength": 1
+        },
+        "transport_security": {"enum": ["authenticated", "tls"]},
+        "input_schema": {
+          "type": [
+            "object",
+            "boolean"
+          ]
+        },
+        "output_schema": {
+          "type": [
+            "object",
+            "boolean"
+          ]
+        },
+        "operations": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scopes": {
+                "type": ["array", "null"],
+                "maxItems": 64,
+                "uniqueItems": true,
+                "items": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/*-]*$"}
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 1
+              },
+              "method": {
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "HEAD",
+                  "OPTIONS"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "maxLength": 512,
+                "minLength": 1,
+                "pattern": "^/[^?#]*$"
+              },
+              "transport_security": {"enum": ["authenticated", "tls"]},
+              "semantics": {
+                "$ref": "#/$defs/semantics"
+              }
+            },
+            "required": [
+              "name",
+              "method",
+              "path",
+              "semantics"
+            ]
+          }
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "attributes": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "maxProperties": 64,
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 0
+          }
+        },
+        "scopes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/*-]*$"
+          }
+        },
+        "semantics": {
+          "$ref": "#/$defs/semantics"
+        },
+        "tool": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$"
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 4096,
+                  "minLength": 1
+                },
+                "input_schema": {
+                  "type": [
+                    "object",
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "method": {
+                  "enum": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE",
+                    "HEAD",
+                    "OPTIONS"
+                  ]
+                },
+                "path": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "pattern": "^/[^?#]*$"
+                },
+                "scopes": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "maxItems": 64,
+                  "items": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/*-]*$"
+                  }
+                },
+                "confirmation": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "input_schema",
+                "method",
+                "path",
+                "scopes",
+                "confirmation"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "id",
+        "interface",
+        "version",
+        "endpoint",
+        "input_schema",
+        "output_schema",
+        "operations",
+        "ready",
+        "attributes",
+        "scopes",
+        "semantics"
+      ]
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [
+        {"required": ["capability"], "properties": {"capability": {"minLength": 1}}},
+        {"required": ["interface"], "properties": {"interface": {"minLength": 1}}}
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 0
+        },
+        "capability": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 0
+        },
+        "interface": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 0
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 0
+        },
+        "namespace": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 0
+        },
+        "locality": {
+          "enum": [
+            "",
+            "any",
+            "node",
+            "host",
+            "local",
+            "remote", "same-node", "same-host", "prefer-local"
+          ]
+        },
+        "policy": {
+          "enum": [
+            "",
+            "default",
+            "priority",
+            "local-preferred",
+            "explicit",
+            "weighted",
+            "first-healthy",
+            "least-loaded",
+            "consistent-hash",
+            "prefer-local",
+            "local-first",
+            "round-robin",
+            "random",
+            "least-load",
+            "pinned",
+            "sticky",
+            "broadcast",
+            "all",
+            "first",
+            "failover"
+          ]
+        },
+        "providers": {"type":"array","minItems":1,"maxItems":4096,"uniqueItems":true,"items":{"type":"string","minLength":1,"maxLength":2048}},
+        "pin": {
+          "description": "Canonical IdentityKey, trusted principal or logical name; not a bare instance ID.",
+          "type": "string",
+          "maxLength": 2048,
+          "minLength": 0
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "many": {
+          "type": "boolean"
+        },
+        "sticky": {
+          "type": "boolean"
+        },
+        "attributes": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "maxProperties": 64,
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 0
+          }
+        },
+        "scopes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/*-]*$"
+          }
+        }
+      },
+      "required": []
+    }
+  }
+}

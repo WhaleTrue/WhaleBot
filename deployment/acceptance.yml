@@ -1,0 +1,35 @@
+# Merge with root docker-compose.yml; remote-model has no direct mesh network.
+services:
+  executor:
+    environment:
+      EXECUTOR_NETWORK: whalemesh_acceptance_net
+  relay:
+    networks: [mesh, remote]
+  remote-model:
+    image: whalemesh/node:local
+    profiles: [remote-test]
+    init: true
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      bootstrap: {condition: service_completed_successfully}
+    environment:
+      MESH_LISTEN: :8080
+      MESH_NAME: remote-model
+      MESH_HOST_ID: isolated-remote-host
+      MESH_NAMESPACE: default
+      MESH_DATA: /data
+      MESH_IDENTITY_FILE: /identity/identity.json
+      MESH_TRUST_FILE: /identity/trust.json
+      MESH_SEEDS: http://relay:8080
+      MESH_RELAYS: http://relay:8080
+      NODE_PACKAGES: llm,relay
+      LLM_MOCK: "1"
+    volumes: [remote_model_identity:/identity:ro, remote_model_data:/data]
+    networks: [remote]
+networks:
+  mesh: {name: whalemesh_acceptance_net}
+  remote: {name: whalemesh_acceptance_remote}
+volumes:
+  remote_model_data:

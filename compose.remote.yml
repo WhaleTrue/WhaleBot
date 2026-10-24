@@ -1,0 +1,32 @@
+name: whalemesh-remote
+
+services:
+  remote-model:
+    image: whalemesh/node:local
+    build: {context: ., target: node}
+    init: true
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      MESH_LISTEN: :8080
+      MESH_NAME: remote-model
+      MESH_HOST_ID: ${REMOTE_HOST_ID:?set distinct REMOTE_HOST_ID}
+      MESH_NAMESPACE: default
+      MESH_DATA: /data
+      MESH_IDENTITY_FILE: /identity/identity.json
+      MESH_TRUST_FILE: /identity/trust.json
+      MESH_SEEDS: ${MESH_REMOTE_RELAY:?set HTTPS MESH_REMOTE_RELAY}
+      MESH_RELAYS: ${MESH_REMOTE_RELAY:?set HTTPS MESH_REMOTE_RELAY}
+      MESH_ALLOW_PLAINTEXT_SENSITIVE: "0"
+      NODE_PACKAGES: llm,relay
+      LLM_MOCK: ${LLM_MOCK:-1}
+    volumes:
+      - ./.secrets/remote-model:/identity:ro
+      - remote_model_data:/data
+    networks: [remote]
+
+networks:
+  remote: {}
+volumes:
+  remote_model_data:

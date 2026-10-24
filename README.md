@@ -1,146 +1,128 @@
-# WhaleBot
+# WhaleMesh
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Go 1.22](https://img.shields.io/badge/Go-1.22-00ADD8.svg)](https://go.dev/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://docs.docker.com/compose/)
-[![GitHub Stars](https://img.shields.io/github/stars/WhaleTrue/WhaleBot?style=flat)](https://github.com/WhaleTrue/WhaleBot/stargazers)
+**Capability-Based Autonomous Container Mesh**
 
-默认文档语言为中文。English version: [`README.en.md`](README.en.md)。
+Everything is Docker. Every Docker is an Equal Mesh Node. The Architecture Emerges from Capabilities.
 
-WhaleBot 是一个以 Docker Compose 为核心的多组件 AI 编排系统：单机即可完整运行；`userdocker` 工作容器还可分布到多台机器（远端节点只需能出站连接编排器，无需公网地址）。  
-它的目标不是把所有能力塞进一个进程，而是让各能力作为独立服务协作，并由编排层统一对外提供入口。
+[English](README.en.md) · [架构](docs/architecture/overview.md) · [协议与 Schema](docs/architecture/schema-contracts.md) · [开发指南](docs/developer-guide.md)
 
-本项目**面向开发者**：希望为构建智能体的人提供尽可能高的组合与替换自由。你可以把仓库里自带的服务当作起点，用自建镜像替换或并行扩展其中任意一环，而不必 fork 单体应用后再改天换地。
+WhaleMesh 将 WhaleBot `dev` 的中心化注册、代理与 UserDocker 协议整体替换为同一种 Node 协议。每个节点独立维护可信成员、能力与依赖视图。节点按能力、版本、作用域和策略直接协作；没有全局必需的 orchestrator、数据库、Executor、Relay 或管理面板。
 
-![](assets/overview.png)
+协议平等不等于权限相同。只有受授权的 Executor 能访问 Docker Engine。声明 `container.manage` 不会获得 Docker Socket 或管理员权限。
 
-## 设计理念与架构原则
+## 启动
 
-- **容器即组件**：每种能力运行在独立容器中，向编排层注册后接入整体；组件可独立部署、独立健康检查。
-- **热插拔与可替换**：默认 compose 提供一套可运行的初始组件；你随时可以接入自己构建的 tool 容器、适配器或模型网关，扩展智能体能力而不重写核心编排。
-- **能力如何生长**：需要新能力时，实现对应功能的 tool（或环境）容器，按注册约定接入框架后，`runtime` 即可发现并调用。实现细节见 `orchestrator/`、`runtime/` 及各模块 README。
-- **与 Docker 的协同**：智能体可通过现有路径（例如 `user-docker-manager`）创建与管理动态容器；在架构上也可以延伸到「由智能体自建 tool、自我扩展能力」等场景，但接口与生命周期规范仍在完善中，后续会以 schema 与文档形式固化。
-- **统一入口**：日常使用主要面对 `orchestrator` 与 `webui`。
-- **先可用再扩展**：即便缺少部分外部凭据（例如模型 key、Telegram token），栈仍尽可能保持可启动、可联调。
+需要 Docker Engine 与 Compose v2.24+ / v5。默认部署不需要外部 API Key。
 
-## 范式定位
-
-当前仓库提供的是一套**可运行的参考范式**：它演示了组件如何协作、如何接到最小可用的对话闭环。  
-范式本身**不是**智能体能力的上限——上限取决于你接入的组件生态与规范，而不是把更多逻辑塞进单个进程。
-
-## 系统框架（整体视图）
-
-```mermaid
-flowchart LR
-  user["User"] --> webui["webui"]
-  user --> adapterWebui["adapter-webui"]
-  tg["Telegram"] --> adapterTelegram["adapter-telegram"]
-  webui --> orchestrator["orchestrator"]
-  adapterWebui --> orchestrator
-  adapterTelegram --> orchestrator
-  orchestrator --> runtime["runtime"]
-  orchestrator --> session["session"]
-  orchestrator --> llmOpenai["llm-openai"]
-  orchestrator --> toolDocker["user-docker-manager"]
-  orchestrator --> logger["logger"]
-  orchestrator --> skills["skills"]
-  orchestrator --> memory["memory"]
-  orchestrator --> workspace["workspace"]
-  orchestrator --> stats["stats"]
-```
-
-## 快速开始
-
-完成环境启动并在 WebUI 中配好 **LLM** 与 **Telegram Bot Token** 后，即可在 Telegram 客户端里直接与你的 Bot 私聊（消息经 `adapter-telegram` 进入编排与 `runtime`）。
-
-1. **准备环境变量**
-
-根目录 `.env` 主要承载 Compose 与通用变量；**不必**在根文件里配置模型 API 密钥（模型侧在 `llm-openai` 数据卷 / WebUI 中配置，见 `AGENTS.md`）。
-
-```bash
-cp .env.example .env
-```
-
-按需编辑 `.env`；多数场景可先保留示例默认值。
-
-2. **启动系统**
-
-```bash
+```sh
 docker compose up -d --build
+docker compose exec web cat /identity/admin-password
 ```
 
-3. **打开 WebUI 并登录**
+浏览器访问 `http://localhost:18000`。用户名默认 `admin`，密码由 bootstrap 随机生成并持久化。每个节点持有独立 Ed25519 私钥；没有共享管理员私钥或默认固定密码。
 
-浏览器访问 `http://localhost:18000`，按界面完成**初始账号**（凭据在 `webui` 数据卷中持久化）。
+默认 `LLM_MOCK=1`，回复明确标记为开发 Mock，不代表连接了真实模型。真实推理需要在模型配置中保存 OpenAI-compatible 模型，并关闭 Mock。Telegram 需要真实 Bot Token 与用户白名单。
 
-4. **创建 Telegram Bot（若还没有）**
+默认只把 Web 端口绑定到宿主机回环地址。开发 Docker bridge 使用签名 HTTP；它没有加密能力。Compose 显式允许此隔离网络的明文 Secret 传输并打印警告。跨主机必须使用经过验证的 HTTPS，关闭该例外。
 
-在 Telegram 中打开 [@BotFather](https://t.me/BotFather)，发送 `/newbot`，按提示设置显示名与用户名；创建成功后 BotFather 会给出 **HTTP API token**，复制备用。更细的说明见 [Telegram Bots 介绍](https://core.telegram.org/bots#6-botfather)。
+### 最小聊天系统
 
-5. **在 WebUI 中配置 LLM 与 Telegram**
+不需要管理面板、不需要 Docker Executor，也没有 orchestrator：
 
-- **LLM**：在 **LLM** 页配置上游地址、API 密钥与模型等（写入 `llm-openai` 侧，例如默认 `LLM_CONFIG_PATH` JSON）。无有效密钥时仅适合本地占位 / echo 联调，无法支撑真实对话质量。
-- **Telegram**：在 **适配器** 页为 `adapter-telegram` 填入上一步的 **bot token**；可按需设置用户 ID 白名单。**未填 token** 时服务仍会注册，但不会长轮询，Telegram 侧收不到消息。
-
-两者均配置有效后，`adapter-telegram` 开始轮询，即可在 Telegram 里搜索你的 Bot 并发送消息进行对话。
-
-不想用 Telegram 也可以直接使用内置的 **Web 聊天界面**（`adapter-webui`）：浏览器访问 `http://localhost:18083`，默认账号与 WebUI 相同。
-
-6. **API 入口（可选）**
-
-编排层 HTTP：`http://localhost:18080`
-
-7. **扩展 userdocker 节点（可选，分布式）**
-
-任何能出站访问编排器的机器都可以成为 userdocker 节点：`user-docker-manager` 主动拨号 `POST /api/v1/nodes/connect`（凭 `NODE_TOKEN`），随后通过该反向隧道对编排器提供完整 API，机器本身无需公网地址。容器统一以 `"<节点>/<容器名>"` 复合名寻址。
-
-```bash
-# 在远端机器上（先改好 NODE_TOKEN，与主机 .env 保持一致）
-ORCHESTRATOR_PUBLIC_URL=http://your-hub-host:18080 \
-NODE_NAME=gpu-box-1 NODE_TOKEN=<shared-token> \
-docker compose -f docker-compose.node.yml up -d --build
+```sh
+docker compose -f compose.minimal.yml up -d --build
+docker compose -f compose.minimal.yml run --rm chat '你好，WhaleMesh'
 ```
 
-**关于当前内置示例**：仓库内置**两个**用户侧适配器（Telegram 与 Web 聊天）与**一条** OpenAI 兼容的 LLM 路径（`llm-openai`），构成可运行的对话闭环；WebUI 另提供**模型基准测试**（Benchmark）页，便于在多个本地模型间横向比较。更多适配器与模型后端将随组件 **schema** 与 AGENT 文档完善后更易扩展（适配器进度反馈模式见 `docs/adapter-progress-pattern.md`）。
+终端适配器解析 `agent.run`；Agent 解析 `session.store` 与 `llm.invoke`。Docker DNS 只解析 bootstrap 地址，不承担能力发现。
 
-## Roadmap / 近期方向
+### 可选扩展
 
-- 完善各类组件的接口 schema 定义，并配套 AGENT 文档，使开发者能低成本编写或生成新组件。
-- 完善 Docker 生命周期管理，加强编排与 Docker 的交互能力，使智能体与容器的协作更顺滑。
-- 优化提示词与 ReAct 工作流。
-- 增加更多常用 adapter。
-- 更多细项以各模块 TODO 与 Issue 为准。
+```sh
+docker compose --profile multi-provider up -d
+# 第二个独立模型 Provider。
+docker compose --profile telegram up -d
+# Telegram 配置与白名单。
+docker compose --profile executor up -d
+# 只有此容器挂载 Docker Socket。
+docker compose --profile example build hello
+docker compose --profile example up -d hello
+# 普通第三方 Hello Capability。
+docker compose --profile relay up -d
+# 仅本地 Relay；公网使用 TLS 配置。
+```
 
-## 仓库结构
+知识节点可以独立启动、停止和重启。Agent 对可选 Memory、Skills、事件和统计合理降级。必需能力缺失时返回明确错误。状态存储不会因为另一个 Provider 可用而自动迁移。
 
-以下为高层说明；各目录的实现细节见对应子模块 README。
+## 核心设计
 
-- `orchestrator/`：编排与网关（组件注册/心跳、节点隧道、API 反向代理）
-- `runtime/`：ReAct 执行循环（含模型基准测试 harness）
-- `session/`：会话持久化（SQLite，支持空闲过期）
-- `skills/`：技能库（文件系统技能包 + SQLite FTS5 检索索引）；对外经 orchestrator 暴露 `/api/v1/skills*` 等路由
-- `llm-openai/`：OpenAI 兼容模型调用适配（多 profile，WebUI 管理）
-- `adapter-telegram/`：Telegram 用户 I/O 适配器
-- `adapter-webui/`：ChatGPT 风格 Web 聊天适配器（宿主端口 18083）
-- `user-docker-manager/`：`user docker` 系统管理（列举、创建、移除、重启、接口发现）；每台节点机器一个实例，经出站反向隧道接入编排器
-- `logger/`：日志服务（事件持久化）
-- `stats/`：Overview 统计服务（可选，停用即禁用指标）
-- `memory/`：记忆服务（KV 笔记 + AES-256-GCM 加密的密钥库，agent 经 `{{secret:key}}` 占位符引用）
-- `workspace/`：工作区服务
-- `userdocker-base/`：动态 userdocker 基础镜像
-- `whalebot/userdocker-golang:latest`：动态 userdocker 的 Go 工具链镜像变体（由 `userdocker-base` 构建流程产出）
-- `webui/`：管理面板前端（Svelte + Caddy，含登录鉴权）
+- **统一身份**：namespace、logical name、principal、host、运行实例与公开元数据明确分离。重启生成新 instance ID。
+- **统一声明**：Node、Capability、Deployment 使用严格、带版本的 JSON Schema。公开声明不携带凭据。
+- **对等发现**：可信签名的成员交换、每个实例的递增序列、本地 TTL、优雅 draining、旧状态抑制与恢复重连。
+- **本地解析**：按接口版本、readiness、namespace、权限、属性与显式策略选择 Provider。选择结果可解释；不依赖 map 遍历顺序。
+- **业务接口保持类型**：不同能力有自己的 HTTP endpoint 与操作描述。公共层处理身份、授权、追踪、deadline、取消、错误与流式通信，不强制万能 `/invoke`。
+- **工具显式导出**：只有声明 Tool Export 的能力进入模型工具集。模型提供的工具名称、所有者或确认布尔值不构成授权。
+- **分层权限**：节点调用、浏览器用户、IM 用户、工具执行、Secret 与 Engine 权限分别校验。
+- **可选 Relay**：出站 yamux 连接提供远端可达性；原始目标仍独立验证签名和权限。Relay 不选择业务 Provider。
 
-## 文档与信息优先级
+## 产品能力
 
-当信息不一致时，按以下顺序判断：
+Agent 的 ReAct、工具调用、上下文、检索注入、秘密引用、审批、结构化事件、usage 和 Benchmark 均使用 Mesh SDK。模型 Provider 支持独立多实例、多个持久配置模型、OpenAI tool calling、SSE 与超时。推理不自动重放，包括 HTTP 429、传输失败与部分流响应；不会偷偷返回 Mock 或切换到收费模型。
 
-1. `docker-compose.yml`（运行事实）
-2. `.env.example`（配置事实）
-3. `AGENTS.md`（面向 AI agent 的低 token 项目快照）
-4. 根 `README.md` 与各模块 `README.md`（说明文档）
+持久能力包括 Session、Memory Notes/Search、加密 Secret、版本化 Skills/ZIP 导入、隔离 Workspace/Artifact、事件与统计。Svelte WebUI 提供真实动态拓扑、能力/依赖/绑定详情、聊天、会话、模型与适配器配置，以及存储、Docker、日志、统计、Benchmark 管理。Telegram 保留命令、会话轮换、进度、错误和产物发送。
 
-## 贡献说明
+Executor 接收 Deployment 期望状态，只操作自身授权标签的资源。动态容器使用与固定容器相同的 Node 协议，使用预先授权的独立身份池。默认禁止宿主机目录、Docker Socket 转交、特权容器和危险网络。外部镜像需要不可变 digest 与可信管理员签名审批；模型不能自行宣称用户批准。
 
-提交贡献前，请同步检查并更新 `AGENTS.md`。  
-只要你的改动影响了架构、服务清单、端口、环境变量、运行方式或项目状态，就必须在同一提交中更新 `AGENTS.md`。
+## 目录
+
+```text
+cmd/                 node、bootstrap、终端 chat
+pkg/mesh/            角色无关 SDK
+schemas/             严格 JSON Schema
+internal/agent/      Agent 与 Benchmark
+internal/llm/        模型 Provider
+internal/providers/  持久业务能力
+internal/executor/   Docker Engine 权限边界
+internal/relay/      可选出站多机传输
+internal/web/        用户认证与浏览器能力客户端
+internal/telegram/   Telegram 适配器
+web/                 Svelte 前端
+examples/hello/      独立 Capability 示例
+scripts/             真实 Docker 验收
+ deployment/         身份计划与测试部署
+```
+
+## 验证
+
+本地源码开发需要 Go 1.26、Node 24。命令本身不是已经通过的证明；实际结果以执行输出和验收报告为准。
+
+```sh
+go test ./...
+go test -race ./...
+go vet ./...
+go build ./...
+cd web
+npm ci
+npm run build
+node --test src/api.test.js src/topology.test.js
+cd ..
+python scripts/acceptance.py
+```
+
+验收使用单独 Compose project 与隔离网络，验证无 orchestrator 聊天、动态知识、多模型 Provider、故障恢复、真实动态容器、权限边界和 Relay 重连。真实 Telegram 与外部模型质量验证需要自己的凭据，不会用 Mock 成功替代。
+
+## 文档
+
+- [单机部署与身份配置](docs/single-host.md)
+- [多机与 Relay](docs/multi-host.md)
+- [安全模型](docs/security.md)
+- [发现与依赖解析](docs/discovery-resolver.md)
+- [Schema 合同](docs/architecture/schema-contracts.md)
+- [Capability 开发](docs/developer-guide.md) 与 [Hello 示例](examples/hello/README.md)
+- [Executor](internal/executor/README.md)
+- [故障排查](docs/troubleshooting.md)
+- [旧实现审计](docs/architecture/legacy-audit.md) 与 [ADR](docs/architecture/adr/)
+
+本次是无兼容层的整体切换。旧 API、旧注册与旧数据库不继续运行；不会自动删除或迁移用户旧数据卷。修改项目时同步更新 `AGENTS.md`、受影响组件 README 与运行文档。代码探索前必须使用 graphify，修改后运行 `graphify update .`。
+
+MIT License，见 [LICENSE](LICENSE)。

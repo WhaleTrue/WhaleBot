@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://whalemesh.dev/schemas/capability.schema.json",
+  "$ref": "https://whalemesh.dev/schemas/node.schema.json#/$defs/capability"
+}
