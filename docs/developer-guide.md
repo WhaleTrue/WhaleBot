@@ -14,6 +14,17 @@ Register handlers with `node.Handle(method, path, scopes, handler)`. Return capa
 
 Use `node.AddWorker` for work tied to the node context, before `Start`, rather than an unowned background goroutine. Persist business data below the provided data directory. Do not treat membership as a storage replication system. Expose ownership and sticky-provider requirements for mutable state.
 
+## Go module
+
+The public SDK import is `github.com/WhaleTrue/WhaleBot/pkg/mesh`. Product branding does not change the repository's module path. Until this rewrite merges into `dev`, select its development branch explicitly:
+
+```sh
+go mod init example.com/my-capability
+go get github.com/WhaleTrue/WhaleBot/pkg/mesh@feat/whalemesh-architecture-rewrite
+```
+
+For an unpublished local checkout, use `go mod edit -replace=github.com/WhaleTrue/WhaleBot=/absolute/path/to/WhaleBot` before resolving the dependency. Replace only your consumer module; no core SDK change is required. Implement a standalone executable following `examples/hello/main.go`, then build it in an ordinary Docker image.
+
 ## Capability contract
 
 Choose a stable capability ID and interface name. Use strict SemVer. Describe input/output with Draft 2020-12 JSON Schema and validate input again at the business boundary; a schema in a manifest is descriptive, not automatic HTTP payload enforcement. Reject unknown input fields where appropriate. Use structured errors with a meaningful HTTP status.

@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 type conversation struct {

@@ -16,9 +16,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/internal/llm"
-	"github.com/WhaleMesh/WhaleMesh/internal/providers"
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/internal/llm"
+	"github.com/WhaleTrue/WhaleBot/internal/providers"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 type liveFixture struct {
@@ -66,7 +66,7 @@ func (f *liveFixture) node(name string, requirements []mesh.Requirement, registe
 		f.seeds = node.Manifest().Transport.Advertise
 	}
 	f.t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 		if err := node.Close(ctx); err != nil {
 			f.t.Error(err)

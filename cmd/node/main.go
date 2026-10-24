@@ -12,14 +12,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/internal/agent"
-	"github.com/WhaleMesh/WhaleMesh/internal/executor"
-	"github.com/WhaleMesh/WhaleMesh/internal/llm"
-	"github.com/WhaleMesh/WhaleMesh/internal/providers"
-	"github.com/WhaleMesh/WhaleMesh/internal/relay"
-	"github.com/WhaleMesh/WhaleMesh/internal/telegram"
-	"github.com/WhaleMesh/WhaleMesh/internal/web"
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/internal/agent"
+	"github.com/WhaleTrue/WhaleBot/internal/executor"
+	"github.com/WhaleTrue/WhaleBot/internal/llm"
+	"github.com/WhaleTrue/WhaleBot/internal/providers"
+	"github.com/WhaleTrue/WhaleBot/internal/relay"
+	"github.com/WhaleTrue/WhaleBot/internal/telegram"
+	"github.com/WhaleTrue/WhaleBot/internal/web"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 type register func(*mesh.Node, string) ([]mesh.Capability, error)

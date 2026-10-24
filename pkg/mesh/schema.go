@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/WhaleMesh/WhaleMesh/schemas"
+	"github.com/WhaleTrue/WhaleBot/schemas"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v6"
 )
 

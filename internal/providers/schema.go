@@ -1,6 +1,6 @@
 package providers
 
-import "github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+import "github.com/WhaleTrue/WhaleBot/pkg/mesh"
 
 func describe(capability *mesh.Capability) {
 	var input, output any

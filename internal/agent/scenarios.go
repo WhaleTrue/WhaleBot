@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/internal/llm"
-	"github.com/WhaleMesh/WhaleMesh/internal/providers"
+	"github.com/WhaleTrue/WhaleBot/internal/llm"
+	"github.com/WhaleTrue/WhaleBot/internal/providers"
 )
 
 var planCases = []struct {

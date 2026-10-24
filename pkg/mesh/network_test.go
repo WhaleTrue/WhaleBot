@@ -287,9 +287,14 @@ func TestSignedInvocationRejectsSpoofReplayScopeAndNamespace(t *testing.T) {
 
 func TestResolverDeterminismVersionsAndPolicies(t *testing.T) {
 	f := meshNetwork(t, "consumer", "alpha", "beta")
-	consumer := f.node(t, "consumer", nil, false, "")
-	alpha := f.node(t, "alpha", consumer.Manifest().Transport.Advertise, true, "")
-	beta := f.node(t, "beta", consumer.Manifest().Transport.Advertise, true, "")
+	// Selection is not a subsecond failure-detector benchmark.
+	stable := func(node *Node) {
+		node.config.Interval = 2 * time.Second
+		node.config.TTL = 15 * time.Second
+	}
+	consumer := f.node(t, "consumer", nil, false, "", stable)
+	alpha := f.node(t, "alpha", consumer.Manifest().Transport.Advertise, true, "", stable)
+	beta := f.node(t, "beta", consumer.Manifest().Transport.Advertise, true, "", stable)
 	c := beta.Manifest().Provides[0]
 	c.Attributes = map[string]string{"priority": "20", "weight": "0"}
 	if err := beta.UpdateCapabilities([]Capability{c}); err != nil {
@@ -308,7 +313,7 @@ func TestResolverDeterminismVersionsAndPolicies(t *testing.T) {
 	req.Pin = "alpha"
 	b, e := consumer.Resolve(req)
 	if e != nil || b[0].Node.Identity.InstanceID != alpha.Manifest().Identity.InstanceID {
-		t.Fatal("explicit selection ignored")
+		t.Fatalf("explicit provider alpha unavailable or wrong: bindings=%v error=%v", b, e)
 	}
 	req.Version = "^2.0.0"
 	if _, e = consumer.Resolve(req); e == nil {

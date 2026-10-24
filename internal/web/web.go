@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/internal/executor"
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/internal/executor"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 	"golang.org/x/crypto/bcrypt"
 )
 
