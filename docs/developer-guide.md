@@ -16,11 +16,11 @@ Use `node.AddWorker` for work tied to the node context, before `Start`, rather t
 
 ## Go module
 
-The public SDK import is `github.com/WhaleTrue/WhaleBot/pkg/mesh`. Product branding does not change the repository's module path. Until this rewrite merges into `dev`, select its development branch explicitly:
+The public SDK import is `github.com/WhaleTrue/WhaleBot/pkg/mesh`. Product branding does not change the repository's module path. Until this rewrite merges into `dev`, pin a rewrite commit explicitly; Go rejects slash-bearing branch names as version strings:
 
 ```sh
 go mod init example.com/my-capability
-go get github.com/WhaleTrue/WhaleBot/pkg/mesh@feat/whalemesh-architecture-rewrite
+go get github.com/WhaleTrue/WhaleBot/pkg/mesh@0c59784f57bb8f80037cf786ba69204ae61223cf
 ```
 
 For an unpublished local checkout, use `go mod edit -replace=github.com/WhaleTrue/WhaleBot=/absolute/path/to/WhaleBot` before resolving the dependency. Replace only your consumer module; no core SDK change is required. Implement a standalone executable following `examples/hello/main.go`, then build it in an ordinary Docker image.
