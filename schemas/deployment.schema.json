@@ -1,0 +1,316 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "whalemesh.deployment/v1"
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 63,
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+    },
+    "namespace": {
+      "type": "string",
+      "maxLength": 63,
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63,
+          "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+        },
+        "labels": {"$ref": "#/$defs/publicMap"},
+        "annotations": {"$ref": "#/$defs/publicMap"},
+        "requires": {"$ref": "#/$defs/requirements"}
+      }
+    },
+    "requires": {"$ref": "#/$defs/requirements"},
+    "image": {
+      "type": "string",
+      "maxLength": 512,
+      "minLength": 1,
+      "pattern": "^[^\\s]+$"
+    },
+    "command": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 128,
+      "items": {
+        "type": "string",
+        "maxLength": 8192,
+        "minLength": 0
+      }
+    },
+    "env": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "maxProperties": 128,
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 8192,
+        "minLength": 0
+      }
+    },
+    "secrets": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]*$"
+          },
+          "target": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 2,
+            "pattern": "^/run/secrets/"
+          }
+        },
+        "required": [
+          "name",
+          "target"
+        ]
+      }
+    },
+    "volumes": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+          },
+          "target": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 2,
+            "pattern": "^/"
+          },
+          "read_only": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "read_only"
+        ]
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 16777216,
+          "maximum": 1099511627776
+        },
+        "nano_cpus": {
+          "type": "integer",
+          "minimum": 1000000,
+          "maximum": 64000000000
+        },
+        "pids_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        }
+      },
+      "required": [
+        "memory_bytes",
+        "nano_cpus",
+        "pids_limit"
+      ]
+    },
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 0,
+          "pattern": "^[A-Za-z0-9_.-]*$"
+        },
+        "egress": {
+          "type": "boolean"
+        },
+        "ports": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "container_port": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "host_port": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "protocol": {
+                "enum": [
+                  "tcp",
+                  "udp"
+                ]
+              }
+            },
+            "required": [
+              "container_port",
+              "host_port",
+              "protocol"
+            ]
+          }
+        }
+      },
+      "required": [
+        "name",
+        "egress",
+        "ports"
+      ]
+    },
+    "replicas": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 16
+    },
+    "scope": {
+      "enum": [
+        "session",
+        "task",
+        "global"
+      ]
+    },
+    "session_id": {
+      "type": "string",
+      "maxLength": 128,
+      "minLength": 0
+    },
+    "task_id": {
+      "type": "string",
+      "maxLength": 128,
+      "minLength": 0
+    },
+    "ttl_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 604800
+    },
+    "restart_policy": {
+      "enum": [
+        "no",
+        "on-failure",
+        "unless-stopped"
+      ]
+    },
+    "desired_state": {
+      "enum": [
+        "running",
+        "stopped",
+        "absent"
+      ]
+    },
+    "labels": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 4096,
+        "minLength": 0
+      }
+    },
+    "approval_ids": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 32,
+      "items": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/@+-]*$"
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "namespace",
+    "node",
+    "image",
+    "resources",
+    "network",
+    "replicas",
+    "scope",
+    "ttl_seconds",
+    "restart_policy",
+    "desired_state"
+  ],
+  "$defs": {
+    "publicMap": {
+      "type": ["object", "null"],
+      "maxProperties": 64,
+      "propertyNames": {"type": "string", "minLength": 1, "maxLength": 128},
+      "additionalProperties": {"type": "string", "maxLength": 4096}
+    },
+    "requirements": {
+      "type": ["array", "null"],
+      "maxItems": 256,
+      "items": {"$ref": "https://whalemesh.dev/schemas/node.schema.json#/$defs/requirement"}
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://whalemesh.dev/schemas/deployment.schema.json"
+}

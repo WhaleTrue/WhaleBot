@@ -1,136 +1,116 @@
-# WhaleBot
+# WhaleMesh
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Go 1.22](https://img.shields.io/badge/Go-1.22-00ADD8.svg)](https://go.dev/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://docs.docker.com/compose/)
-[![GitHub Stars](https://img.shields.io/github/stars/WhaleTrue/WhaleBot?style=flat)](https://github.com/WhaleTrue/WhaleBot/stargazers)
+**Capability-Based Autonomous Container Mesh**
 
-Default root documentation is Chinese. Chinese version: [`README.md`](README.md).
+Everything is Docker. Every Docker is an Equal Mesh Node. The Architecture Emerges from Capabilities.
 
-WhaleBot is a Docker Compose based multi-service AI orchestration system. A single host runs the full stack; `userdocker` work containers can additionally be distributed across machines — remote nodes only need outbound access to the orchestrator (no public address required, see `docker-compose.node.yml`).
-The design goal is not to put every capability into one process, but to keep capabilities
-as independent services and expose a unified entry through the orchestrator.
+[中文](README.md) · [Architecture](docs/architecture/overview.md) · [Schemas](docs/architecture/schema-contracts.md) · [Capability development](docs/developer-guide.md)
 
-This project is **developer-first**: it aims to maximize composability and swap freedom when you build agents. Treat the bundled services as a starting point—replace any layer with your own images or add parallel components without rewriting a monolith.
+WhaleMesh replaces WhaleBot `dev`'s centralized registration, proxy chain and special UserDocker protocol. Every business container embeds the same node protocol, owns a local verified membership/capability view, and resolves dependencies by capability rather than a fixed service role. There is no mandatory central orchestrator, membership database, Executor, Relay or dashboard.
 
-![](assets/overview.png)
+Protocol equality does not imply equal host privileges. Only an explicitly authorized Executor can access Docker Engine. Advertising `container.manage` cannot grant Engine access or administrator rights.
 
-## Design Philosophy and Architecture
+## Start
 
-- **Containers as components**: each capability runs in its own container, registers with the orchestrator, and joins the stack; components run and health-check independently.
-- **Hot-swap and replaceability**: the default Compose file ships a runnable baseline; you can plug in custom tool containers, adapters, or model gateways to extend agent behavior without rewriting core orchestration.
-- **How capabilities grow**: implement a tool (or environment) container with the right surface area, register it as prescribed, and `runtime` can discover and call it. See `orchestrator/`, `runtime/`, and each module README for mechanics.
-- **Working with Docker**: agents can already create and manage dynamic containers via paths such as `user-docker-manager`; architecture naturally extends toward agents authoring new tools or containers, while **interface and lifecycle contracts are still being formalized** (schemas and docs will follow).
-- **Unified entry**: day-to-day use centers on `orchestrator` and `webui`.
-- **Usable first**: the stack still boots for local integration even when some external credentials (model keys, Telegram tokens) are missing.
+Requirements: Docker Engine and Compose v2.24+ or v5. No external API key is needed for the explicit development provider.
 
-## What This Repository Represents
-
-The repo ships a **working reference paradigm**: it shows how components collaborate and how to close a minimal conversational loop.
-That paradigm is **not** the ceiling of what your agents can do—the ceiling is the ecosystem of components and contracts you plug in, not how much logic lives in one process.
-
-## Architecture (High Level)
-
-```mermaid
-flowchart LR
-  user["User"] --> webui["webui"]
-  user --> adapterWebui["adapter-webui"]
-  tg["Telegram"] --> adapterTelegram["adapter-telegram"]
-  webui --> orchestrator["orchestrator"]
-  adapterWebui --> orchestrator
-  adapterTelegram --> orchestrator
-  orchestrator --> runtime["runtime"]
-  orchestrator --> session["session"]
-  orchestrator --> llmOpenai["llm-openai"]
-  orchestrator --> toolDocker["user-docker-manager"]
-  orchestrator --> logger["logger"]
-  orchestrator --> skills["skills"]
-  orchestrator --> memory["memory"]
-  orchestrator --> workspace["workspace"]
-  orchestrator --> stats["stats"]
-```
-
-## Quick Start
-
-After the stack is up, configure **LLM** and a **Telegram bot token** in WebUI; you can then chat with your bot directly in the Telegram client (traffic flows through `adapter-telegram` into orchestration and `runtime`).
-
-1. **Environment file**
-
-Root `.env` holds Compose-wide values; **do not** put model API secrets there (LLM settings live on the `llm-openai` side / WebUI—see `AGENTS.md`).
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` as needed; defaults are often enough at first.
-
-2. **Start the stack**
-
-```bash
+```sh
 docker compose up -d --build
+docker compose exec web cat /identity/admin-password
 ```
 
-3. **Open WebUI and sign in**
+Open `http://localhost:18000`. Username defaults to `admin`; the password is randomly generated and persisted. Each node has an independent Ed25519 private key. There is no shared administrator key or fixed default password. An existing `.env` can override the port; use `docker compose port web 8080` to discover the actual binding.
 
-Browse to `http://localhost:18000` and complete **initial dashboard sign-up** (credentials persist in the `webui` volume).
+`LLM_MOCK=1` explicitly returns labeled deterministic development output, not real inference. Configure actual OpenAI-compatible model profiles and disable the mock for real model access. Profiles describe cost class and tool/streaming support. Automatic unspecified model selection is restricted to providers explicitly marked free. Paid or unknown-cost models require explicit model/provider choice; failures never silently turn into mock output or a different paid account.
 
-4. **Create a Telegram bot (if you do not have one)**
+The default dashboard port binds loopback only. Development bridge traffic is signed HTTP, not encrypted. Compose explicitly enables plaintext secret transport only for that isolated trusted bridge and logs a warning. Routed/multi-host deployments require verified HTTPS and must disable that exception.
 
-In Telegram, open [@BotFather](https://t.me/BotFather), send `/newbot`, and follow the prompts for display name and username. BotFather returns an **HTTP API token**—save it for the next step. See also [Telegram’s bot overview](https://core.telegram.org/bots#6-botfather).
+## Minimal chat without dashboard or Executor
 
-5. **Configure LLM and Telegram in WebUI**
+```sh
+docker compose -f compose.minimal.yml up -d --build
+docker compose -f compose.minimal.yml run --rm chat 'Hello WhaleMesh'
+```
 
-- **LLM**: on the **LLM** page, set upstream URL, API key, and model id (persisted on the `llm-openai` side, e.g. the default `LLM_CONFIG_PATH` JSON). A missing/invalid key is only useful for placeholder / echo wiring, not real conversations.
-- **Telegram**: on **Adapters**, paste the token into `adapter-telegram`; optionally restrict by user ID whitelist. **Without a token**, the service still registers but does not long-poll, so Telegram will not deliver traffic.
+The terminal adapter resolves `agent.run`; the agent resolves session and model capabilities. Docker DNS supplies bootstrap reachability only. Discovery and resolution do not depend on an orchestrator or Docker Socket.
 
-With both configured, `adapter-telegram` starts polling—open your bot in Telegram and send a message.
+## Optional deployments
 
-Prefer the browser? The built-in **web chat** (`adapter-webui`) is available at `http://localhost:18083` with the same default credentials as WebUI.
+```sh
+docker compose --profile multi-provider up -d
+docker compose --profile telegram up -d
+docker compose --profile executor up -d
+docker compose --profile example build hello
+docker compose --profile example up -d hello
+docker compose --profile relay up -d
+```
 
-6. **Orchestrator API (optional)**
+Only Executor mounts the socket. Telegram requires a real token and whitelist; without them it reports an unconfigured state. The example image is an ordinary SDK provider, not a special workload protocol. Remote nodes use `compose.remote.yml`, a separately provisioned identity and an outbound relay connection.
 
-HTTP gateway: `http://localhost:18080`
+## Design
 
-**About the bundled example**: the repo ships **two** user-facing adapters (Telegram and web chat) and **one** OpenAI-compatible LLM path (`llm-openai`) forming a runnable conversational loop; WebUI also includes a **model Benchmark** page for comparing local models over time. More adapters and backends will get easier as component **schemas** and AGENT docs mature (see `docs/adapter-progress-pattern.md` for the adapter progress pattern).
+- Persistent principals, logical names, hosts and process instances are distinct identities.
+- Strict versioned Node, Capability and Deployment JSON Schemas describe protocol contracts. Public manifests contain no credentials.
+- Authenticated peer exchange distributes signed origin sequences. Receiver-local TTL and persisted per-instance watermarks suppress stale/duplicate progress without comparing remote clocks.
+- Each local resolver checks interface/version, readiness, namespace, permissions, attributes, pins and selection policy. Deterministic choices include explanations.
+- Business capabilities retain typed HTTP operations. The common layer handles authentication, authorization, deadlines, signed trace/request context, cancellation, streaming and structured errors.
+- Explicit Tool Export policies control what reaches the model. Model arguments cannot grant identity, Docker authority or user confirmation.
+- Stateful bindings preserve verified principal and persistent data boundary across process restarts. Rebinding to unrelated data is never implicit migration.
+- Optional outbound yamux relays extend transport reachability only. Destinations verify original request authority independently.
 
-## Roadmap / Near-Term Direction
+## Product surfaces
 
-- Formalize interface **schemas** for components and ship matching **AGENT** documentation so new components are cheap to author or generate.
-- Improve Docker **lifecycle** management and orchestration ergonomics so agents interact with containers more smoothly.
-- Refine prompts and the ReAct workflow.
-- Add more common **adapters**.
-- Finer-grained work lives in per-module TODOs and Issues.
+The agent implements bounded ReAct, tool calls, durable session history, skills/memory retrieval, secret references and redaction, trusted approvals, structured traces, usage and benchmarks over the SDK. Model providers support independent replicas, multiple persisted profiles, actual OpenAI-compatible requests, tool calls, streaming and timeouts. Inference is never automatically replayed, including HTTP 429, transport failures and partial streams.
 
-## Repository Layout
+Persistent capabilities cover sessions, notes/search, AES-GCM encrypted secrets, versioned skills/ZIP import, confined workspace/artifacts, events and statistics. The Svelte dashboard exposes actual dynamic topology, capabilities/dependencies/bindings, browser chat, sessions, models/adapters and capability-based management. Telegram retains commands, session rotation, progress, errors and artifact delivery.
 
-High-level map only; each directory has its own README for implementation detail.
+Executor interprets authorized desired deployments and controls only its labeled resources. Dynamic containers use normal mesh identities from constrained, preprovisioned pools. Default policy rejects host binds, socket exposure, privilege escalation, dangerous networks and unbounded resources. External images require immutable digests and trusted administrator signatures, not request approval booleans.
 
-- `orchestrator/`: orchestration and API gateway (component registry/heartbeats, node tunnel hub, reverse proxies)
-- `runtime/`: ReAct execution loop (includes the model benchmark harness)
-- `session/`: conversation persistence (SQLite, idle expiry)
-- `skills/`: skill library (filesystem skill packages + SQLite FTS5 search index); exposed via orchestrator routes such as `/api/v1/skills*`
-- `llm-openai/`: OpenAI-compatible model adapter/client (multi-profile, managed via WebUI)
-- `adapter-telegram/`: Telegram user I/O adapter
-- `adapter-webui/`: ChatGPT-style web chat adapter (host port 18083)
-- `user-docker-manager/`: user docker system manager (list/create/remove/restart/interface discovery); one instance per node machine, connected through an outbound reverse tunnel
-- `logger/`: logging service (persistent events)
-- `stats/`: Overview metrics service (optional; stop the container to disable metrics)
-- `memory/`: memory service (KV notes + AES-256-GCM encrypted secrets store; agents reference secrets via `{{secret:key}}` placeholders)
-- `workspace/`: workspace service
-- `userdocker-base/`: base image for dynamic userdocker instances
-- `whalebot/userdocker-golang:latest`: Go-toolchain image variant for dynamic userdocker compile tasks (produced from the `userdocker-base` build flow)
-- `webui/`: dashboard frontend (Svelte + Caddy, with sign-in auth)
+## Source and verification
 
-## Documentation Priority
+```text
+cmd/                 node, bootstrap, terminal chat
+pkg/mesh/            role-free SDK
+schemas/             strict JSON contracts
+internal/agent/      agent and benchmark
+internal/llm/        model provider
+internal/providers/  durable business capabilities
+internal/executor/   Engine authorization boundary
+internal/relay/      optional outbound transport
+internal/web/        browser authentication and SDK client
+internal/telegram/   IM adapter
+web/                 Svelte UI
+examples/hello/      independent capability provider
+scripts/             real Docker acceptance
+deployment/          identity plans and deployment examples
+```
 
-If docs disagree, trust this order:
+Source development uses Go 1.26 and Node 24. Commands below are runnable checks, not a claim that every environment has passed them.
 
-1. `docker-compose.yml` (runtime truth)
-2. `.env.example` (configuration truth)
-3. `AGENTS.md` (low-token project snapshot for AI agents)
-4. Root and module READMEs
+```sh
+go test ./...
+go test -race ./...
+go vet ./...
+go build ./...
+cd web && npm ci && npm run build && node --test src/api.test.js src/topology.test.js
+cd ..
+python scripts/acceptance.py
+```
 
-## Contribution Note
+Acceptance owns a separate Compose project and isolated remote network. Real Docker tests exercise no-orchestrator chat, dynamic knowledge, provider coexistence/failure, managed nodes, authorization and relay recovery. Actual external model quality and Telegram delivery need real credentials; mock success is not evidence of those integrations.
 
-Before committing contributions, update `AGENTS.md` together with your code changes
-whenever architecture, service map, ports, env vars, runbook, or project status changed.
+## Documentation
+
+- [Single-host deployment](docs/single-host.md)
+- [Multi-host and Relay](docs/multi-host.md)
+- [Security](docs/security.md)
+- [Discovery and resolver](docs/discovery-resolver.md)
+- [Schema contracts](docs/architecture/schema-contracts.md)
+- [Capability development](docs/developer-guide.md) and [Hello](examples/hello/README.md)
+- [Executor](internal/executor/README.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Legacy implementation audit](docs/architecture/legacy-audit.md) and [ADRs](docs/architecture/adr/)
+
+This is a clean breaking cutover. Old APIs, registration clients and database formats are not retained. Old user volumes are neither silently migrated nor removed. Keep AGENTS and affected component/runbook documentation aligned. Query graphify before raw source exploration; run `graphify update .` after code changes.
+
+MIT License; see [LICENSE](LICENSE).

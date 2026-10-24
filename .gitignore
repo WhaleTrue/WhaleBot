@@ -4,5 +4,11 @@
 **/.svelte-kit
 *.log
 .kilo
-/userdocker-base/userdocker
+/artifacts/
+/.secrets/
+/identities/
+/.local/
+/*.exe
+/*.test
 /graphify-out/
+__pycache__/

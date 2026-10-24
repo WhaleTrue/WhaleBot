@@ -1,0 +1,16 @@
+[
+  {
+    "name": "hello-0",
+    "principal": "hello-0",
+    "namespace": "default",
+    "scopes": ["mesh.peer", "mesh.inspect", "hello.invoke"],
+    "provides": ["hello.invoke"]
+  },
+  {
+    "name": "hello-client",
+    "principal": "hello-client",
+    "namespace": "default",
+    "scopes": ["mesh.peer", "mesh.inspect", "hello.invoke"],
+    "provides": []
+  }
+]

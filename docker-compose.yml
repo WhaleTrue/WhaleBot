@@ -1,365 +1,207 @@
-networks:
-  whalebot_net:
-    name: whalebot_net
+name: whalemesh
+
+x-environment: &environment
+  MESH_LISTEN: :8080
+  MESH_NAMESPACE: default
+  MESH_HOST_ID: ${MESH_HOST_ID:-local}
+  MESH_ALLOW_PLAINTEXT_SENSITIVE: "1"
+  MESH_DATA: /data
+  MESH_IDENTITY_FILE: /identity/identity.json
+  MESH_TRUST_FILE: /identity/trust.json
+  MESH_SEEDS: http://agent:8080,http://llm:8080,http://store:8080
+
+x-node: &node
+  image: whalemesh/node:local
+  build:
+    context: .
+    target: node
+  init: true
+  restart: unless-stopped
+  networks: [mesh]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  depends_on:
+    bootstrap: {condition: service_completed_successfully}
 
 services:
-  orchestrator:
-    build: ./orchestrator
-    image: whalebot/orchestrator:latest
-    container_name: orchestrator
-    environment:
-      ORCHESTRATOR_PORT: ${ORCHESTRATOR_PORT:-18080}
-      HEARTBEAT_TTL_SEC: ${HEARTBEAT_TTL_SEC:-30}
-      NODE_TOKEN: ${NODE_TOKEN:-whalebot-node-token}
-      ORCHESTRATOR_UPSTREAM_TIMEOUT_SEC: ${ORCHESTRATOR_UPSTREAM_TIMEOUT_SEC:-240}
-    ports:
-      - "${ORCHESTRATOR_PORT:-18080}:${ORCHESTRATOR_PORT:-18080}"
-    networks: [whalebot_net]
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${ORCHESTRATOR_PORT:-18080}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
-
-  session:
-    build: ./session
-    image: whalebot/session:latest
-    container_name: session
-    environment:
-      SESSION_PORT: ${SESSION_PORT:-18090}
-      SESSION_MAX_MESSAGES: ${SESSION_MAX_MESSAGES:-40}
-      SESSION_IDLE_SEC: ${SESSION_IDLE_SEC:-86400}
-      SESSION_DB_PATH: /data/session.db
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SERVICE_HOST: session
+  # Deployment-only key provisioning. Never participates in membership.
+  bootstrap:
+    image: whalemesh/bootstrap:local
+    build: {context: ., target: bootstrap}
+    network_mode: none
     volumes:
-      - session_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${SESSION_PORT:-18090}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
+      - ./deployment/identities.json:/config/identities.json:ro
+      - agent_identity:/identities/agent
+      - llm_identity:/identities/llm
+      - llm_second_identity:/identities/llm-second
+      - store_identity:/identities/store
+      - knowledge_identity:/identities/knowledge
+      - web_identity:/identities/web
+      - telegram_identity:/identities/telegram
+      - executor_identity:/identities/executor
+      - relay_identity:/identities/relay
+      - remote_model_identity:/identities/remote-model
+      - chat_identity:/identities/chat
+      - hello_identity:/identities/hello-0
+      - task_zero_identity:/identities/task-0
+      - task_one_identity:/identities/task-1
 
-  llm-openai:
-    build: ./llm-openai
-    image: whalebot/llm-openai:latest
-    container_name: llm-openai
+  agent:
+    <<: *node
     environment:
-      LLM_OPENAI_PORT: ${LLM_OPENAI_PORT:-18081}
-      LLM_CONFIG_PATH: /data/llm-config.json
-      LLM_INVOKE_TIMEOUT_SEC: ${LLM_INVOKE_TIMEOUT_SEC:-60}
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SERVICE_HOST: llm-openai
-    # Lets configured base URLs like http://localhost:... reach the host on Linux.
-    # No-op on Docker Desktop (macOS/Windows) where the name is built-in.
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - llm_openai_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${LLM_OPENAI_PORT:-18081}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
+      <<: *environment
+      MESH_NAME: agent
+      MESH_ADVERTISE: http://agent:8080
+      NODE_PACKAGES: agent
+    volumes: [agent_identity:/identity:ro, agent_data:/data]
 
-  runtime:
-    build: ./runtime
-    image: whalebot/runtime:latest
-    container_name: runtime
+  llm:
+    <<: *node
     environment:
-      RUNTIME_PORT: ${RUNTIME_PORT:-18085}
-      REACT_MAX_STEPS: ${REACT_MAX_STEPS:-16}
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SESSION_URL: http://session:18090
-      LLM_OPENAI_URL: http://llm-openai:18081
-      SERVICE_HOST: runtime
-      RUNTIME_SKILLS_INJECT: ${RUNTIME_SKILLS_INJECT:-1}
-      RUNTIME_SKILLS_TOP_K: ${RUNTIME_SKILLS_TOP_K:-5}
-    volumes:
-      - runtime_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-      session: { condition: service_started }
-      llm-openai: { condition: service_started }
-      user-docker-manager: { condition: service_started }
-      skills: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${RUNTIME_PORT:-18085}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
+      <<: *environment
+      MESH_NAME: llm
+      MESH_ADVERTISE: http://llm:8080
+      NODE_PACKAGES: llm
+      LLM_MOCK: ${LLM_MOCK:-1}
+    extra_hosts: [host.docker.internal:host-gateway]
+    volumes: [llm_identity:/identity:ro, llm_data:/data]
 
-  adapter-telegram:
-    build: ./adapter-telegram
-    image: whalebot/adapter-telegram:latest
-    container_name: adapter-telegram
+  store:
+    <<: *node
     environment:
-      ADAPTER_TELEGRAM_PORT: ${ADAPTER_TELEGRAM_PORT:-18084}
-      ADAPTER_CONFIG_PATH: /data/adapter-config.json
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SESSION_URL: http://session:18090
-      ADAPTER_TELEGRAM_CHAT_TIMEOUT_SEC: ${ADAPTER_TELEGRAM_CHAT_TIMEOUT_SEC:-240}
-      SERVICE_HOST: adapter-telegram
-    volumes:
-      - adapter_telegram_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${ADAPTER_TELEGRAM_PORT:-18084}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
+      <<: *environment
+      MESH_NAME: store
+      MESH_ADVERTISE: http://store:8080
+      NODE_PACKAGES: providers
+      PROVIDER_CAPABILITIES: session.store,workspace.files,events.write,stats.ingest
+    volumes: [store_identity:/identity:ro, store_data:/data]
 
-  user-docker-manager:
-    build: ./user-docker-manager
-    image: whalebot/user-docker-manager:latest
-    container_name: user-docker-manager
+  knowledge:
+    <<: *node
     environment:
-      USER_DOCKER_MANAGER_PORT: ${USER_DOCKER_MANAGER_PORT:-18082}
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      NODE_NAME: ${NODE_NAME:-local}
-      NODE_TOKEN: ${NODE_TOKEN:-whalebot-node-token}
-      USERDOCKER_DEFAULT_IMAGE: whalebot/userdocker-base:latest
-      USERDOCKER_ALLOWED_IMAGES: ${USERDOCKER_ALLOWED_IMAGES:-whalebot/userdocker-base:latest,whalebot/userdocker-golang:latest}
-      DOCKER_NETWORK: whalebot_net
-      USERDOCKER_IDLE_HOURS: ${USERDOCKER_IDLE_HOURS:-24}
-      USERDOCKER_IDLE_CHECK_SEC: ${USERDOCKER_IDLE_CHECK_SEC:-300}
-      USERDOCKER_TEMP_TTL_SEC: ${USERDOCKER_TEMP_TTL_SEC:-}
+      <<: *environment
+      MESH_NAME: knowledge
+      MESH_ADVERTISE: http://knowledge:8080
+      NODE_PACKAGES: providers
+      PROVIDER_CAPABILITIES: memory.store,memory.search,secrets.resolve,skills.search
+    volumes: [knowledge_identity:/identity:ro, knowledge_data:/data]
+
+  web:
+    <<: *node
+    environment:
+      <<: *environment
+      MESH_NAME: web
+      MESH_ADVERTISE: http://web:8080
+      NODE_PACKAGES: web
+      WEB_ADMIN_USER: ${WEB_ADMIN_USER:-admin}
+      WEB_ADMIN_PASSWORD_FILE: /identity/admin-password
+      WEB_STATIC_DIR: /app/web
+    ports: ["127.0.0.1:${WEBUI_PORT:-18000}:8080"]
+    volumes: [web_identity:/identity:ro, web_data:/data]
+
+  telegram:
+    <<: *node
+    profiles: [telegram]
+    environment:
+      <<: *environment
+      MESH_NAME: telegram
+      MESH_ADVERTISE: http://telegram:8080
+      NODE_PACKAGES: telegram
+    volumes: [telegram_identity:/identity:ro, telegram_data:/data]
+
+  executor:
+    <<: *node
+    profiles: [executor]
+    group_add: ["${DOCKER_GID:-0}"]
+    environment:
+      <<: *environment
+      MESH_NAME: executor
+      MESH_ADVERTISE: http://executor:8080
+      NODE_PACKAGES: executor
+      EXECUTOR_NETWORK: whalemesh_net
+      EXECUTOR_ALLOWED_IMAGES: whalemesh/hello:local,whalemesh/node:local
+      EXECUTOR_NODE_IMAGE: whalemesh/node:local
+      EXECUTOR_IDENTITIES_DIR: /pool
+      EXECUTOR_APPROVAL_KEYS_FILE: /identity/approval-keys.json
     volumes:
+      - executor_identity:/identity:ro
+      - executor_data:/data
+      - hello_identity:/pool/hello-0:ro
+      - task_zero_identity:/pool/task-0:ro
+      - task_one_identity:/pool/task-1:ro
       - /var/run/docker.sock:/var/run/docker.sock
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-      userdocker-base: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${USER_DOCKER_MANAGER_PORT:-18082}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
 
-  skills:
-    build: ./skills
-    image: whalebot/skills:latest
-    container_name: skills
+  relay:
+    <<: *node
+    profiles: [relay]
     environment:
-      SKILLS_PORT: ${SKILLS_PORT:-18093}
-      SKILLS_ROOT: /data
-      SKILLS_INDEX_PATH: /data/.index/index.db
-      SKILLS_LEGACY_DB_PATH: /data/skills.db
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SERVICE_HOST: skills
-    volumes:
-      - skills_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${SKILLS_PORT:-18093}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
+      <<: *environment
+      MESH_NAME: relay
+      MESH_ADVERTISE: ${RELAY_ADVERTISE:-http://relay:8080}
+      NODE_PACKAGES: relay
+    ports: ["127.0.0.1:${RELAY_PORT:-18088}:8080"]
+    volumes: [relay_identity:/identity:ro, relay_data:/data]
 
-  logger:
-    build: ./logger
-    image: whalebot/logger:latest
-    container_name: logger
+  llm-second:
+    <<: *node
+    profiles: [multi-provider]
     environment:
-      LOGGER_PORT: ${LOGGER_PORT:-18086}
-      LOGGER_DB_PATH: /data/logger.db
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SERVICE_HOST: logger
-    volumes:
-      - logger_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${LOGGER_PORT:-18086}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
+      <<: *environment
+      MESH_NAME: llm-second
+      MESH_ADVERTISE: http://llm-second:8080
+      NODE_PACKAGES: llm
+      LLM_MOCK: ${LLM_MOCK:-1}
+    volumes: [llm_second_identity:/identity:ro, llm_second_data:/data]
 
-  stats:
-    build: ./stats
-    image: whalebot/stats:latest
-    container_name: stats
+  hello:
+    <<: *node
+    profiles: [example]
+    image: whalemesh/hello:local
+    build: {context: ., target: hello}
     environment:
-      STATS_PORT: ${STATS_PORT:-18092}
-      STATS_DB_PATH: /data/stats.db
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SERVICE_HOST: stats
-    volumes:
-      - stats_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${STATS_PORT:-18092}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
+      <<: *environment
+      MESH_NAME: hello
+      MESH_ADVERTISE: http://hello:8080
+    volumes: [hello_identity:/identity:ro, hello_data:/data]
 
-  workspace:
-    build: ./workspace
-    image: whalebot/workspace:latest
-    container_name: workspace
+  chat:
+    <<: *node
+    profiles: [cli]
+    restart: "no"
+    entrypoint: [/app/chat]
+    command: [Hello WhaleMesh]
     environment:
-      WORKSPACE_PORT: ${WORKSPACE_PORT:-18088}
-      WORKSPACE_ROOT: /data/workspaces
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SERVICE_HOST: workspace
-    volumes:
-      - workspace_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${WORKSPACE_PORT:-18088}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
+      <<: *environment
+      MESH_NAME: chat
+      MESH_ADVERTISE: http://chat:8080
+    volumes: [chat_identity:/identity:ro, chat_data:/data]
 
-  memory:
-    build: ./memory
-    image: whalebot/memory:latest
-    container_name: memory
-    environment:
-      MEMORY_PORT: ${MEMORY_PORT:-18087}
-      MEMORY_DB_PATH: /data/memory.db
-      MEMORY_SECRET_KEY: ${MEMORY_SECRET_KEY:-}
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SERVICE_HOST: memory
-    volumes:
-      - memory_data:/data
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${MEMORY_PORT:-18087}/health || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
-
-  adapter-webui:
-    build: ./adapter-webui
-    image: whalebot/adapter-webui:latest
-    container_name: adapter-webui
-    environment:
-      ADAPTER_WEBUI_PORT: ${ADAPTER_WEBUI_PORT:-18083}
-      ADAPTER_DATA_DIR: /data
-      ORCHESTRATOR_URL: http://orchestrator:${ORCHESTRATOR_PORT:-18080}
-      SESSION_URL: http://session:18090
-      ADAPTER_WEBUI_CHAT_TIMEOUT_SEC: ${ADAPTER_WEBUI_CHAT_TIMEOUT_SEC:-240}
-      SERVICE_HOST: adapter-webui
-    volumes:
-      - adapter_webui_data:/data
-    ports:
-      - "${ADAPTER_WEBUI_PORT:-18083}:${ADAPTER_WEBUI_PORT:-18083}"
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${ADAPTER_WEBUI_PORT:-18083}/health >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
-
-  webui:
-    build: ./webui
-    image: whalebot/webui:latest
-    container_name: webui
-    environment:
-      # Browser-facing URL — must be reachable from the host, not just from
-      # inside the whalebot_net network.
-      ORCHESTRATOR_URL: http://localhost:${ORCHESTRATOR_PORT:-18080}
-    volumes:
-      - webui_data:/data
-    ports:
-      - "${WEBUI_PORT:-18000}:80"
-    networks: [whalebot_net]
-    depends_on:
-      orchestrator: { condition: service_started }
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
-
-  # Build-only helper. Having this service in the compose file ensures
-  # `docker compose up --build` builds the userdocker-base image that
-  # user-docker-manager uses this image when spawning new userdocker containers.
-  # We override the entrypoint so the container itself does not register —
-  # real userdocker containers are created on demand via
-  # POST /api/v1/tools/user-dockers.
-  userdocker-base:
-    build:
-      context: ./userdocker-base
-      args:
-        FINAL_BASE_IMAGE: alpine:3.20
-    image: whalebot/userdocker-base:latest
-    container_name: userdocker-base
-    entrypoint: ["sleep"]
-    command: ["infinity"]
-    networks: [whalebot_net]
-    restart: unless-stopped
-
-  # Build-only helper image with Go toolchain preinstalled for compile tasks.
-  # Must still satisfy userdocker interface contract.
-  userdocker-golang:
-    build:
-      context: ./userdocker-base
-      args:
-        FINAL_BASE_IMAGE: golang:1.22-alpine
-    image: whalebot/userdocker-golang:latest
-    container_name: userdocker-golang
-    entrypoint: ["sleep"]
-    command: ["infinity"]
-    networks: [whalebot_net]
-    restart: unless-stopped
+networks:
+  mesh: {name: whalemesh_net}
 
 volumes:
-  session_data:
-  runtime_data:
-  skills_data:
-  logger_data:
-  stats_data:
-  workspace_data:
-  llm_openai_data:
-  adapter_telegram_data:
-  adapter_webui_data:
-  webui_data:
-  memory_data:
+  agent_identity:
+  llm_identity:
+  llm_second_identity:
+  store_identity:
+  knowledge_identity:
+  web_identity:
+  telegram_identity:
+  executor_identity:
+  relay_identity:
+  remote_model_identity:
+  chat_identity:
+  hello_identity:
+  task_zero_identity:
+  task_one_identity:
+  agent_data:
+  llm_data:
+  llm_second_data:
+  store_data:
+  knowledge_data:
+  web_data:
+  telegram_data:
+  executor_data:
+  relay_data:
+  hello_data:
+  chat_data:

@@ -1,0 +1,28 @@
+{
+  "schema": "whalemesh.deployment/v1",
+  "id": "hello",
+  "namespace": "default",
+  "node": {
+    "name": "hello",
+    "labels": {"example": "hello"},
+    "annotations": {},
+    "requires": []
+  },
+  "requires": [],
+  "image": "whalemesh/hello:local",
+  "command": ["/app/hello"],
+  "env": {},
+  "secrets": [],
+  "volumes": [],
+  "resources": {"memory_bytes": 67108864, "nano_cpus": 100000000, "pids_limit": 64},
+  "network": {"name": "whalemesh_net", "egress": true, "ports": []},
+  "replicas": 1,
+  "scope": "task",
+  "session_id": "",
+  "task_id": "hello-demo",
+  "ttl_seconds": 300,
+  "restart_policy": "no",
+  "desired_state": "running",
+  "labels": {"example": "hello"},
+  "approval_ids": []
+}

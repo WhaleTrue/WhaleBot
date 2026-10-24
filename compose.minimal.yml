@@ -1,0 +1,35 @@
+name: whalemesh-minimal
+
+services:
+  bootstrap:
+    image: whalemesh/bootstrap:local
+    build: {context: ., target: bootstrap}
+    network_mode: none
+    volumes:
+      - ./deployment/minimal-identities.json:/config/identities.json:ro
+      - agent_identity:/identities/agent
+      - llm_identity:/identities/llm
+      - store_identity:/identities/store
+      - chat_identity:/identities/chat
+  agent:
+    extends: {file: docker-compose.yml, service: agent}
+  llm:
+    extends: {file: docker-compose.yml, service: llm}
+  store:
+    extends: {file: docker-compose.yml, service: store}
+    environment:
+      PROVIDER_CAPABILITIES: session.store
+  chat:
+    extends: {file: docker-compose.yml, service: chat}
+
+networks:
+  mesh: {name: whalemesh_minimal_net}
+volumes:
+  agent_identity:
+  llm_identity:
+  store_identity:
+  chat_identity:
+  agent_data:
+  llm_data:
+  store_data:
+  chat_data:

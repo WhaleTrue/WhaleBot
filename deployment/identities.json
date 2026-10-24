@@ -1,0 +1,16 @@
+[
+ {"name":"agent","principal":"agent","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay","agent.run","agent.delegate","session.read","session.write","session.delegate","llm.invoke","llm.models.list","skills.read","skills.search","skills.delegate","memory.search","memory.delegate","secrets.resolve","secrets.delegate","events.write","events.delegate","stats.ingest","stats.delegate","container.manage","container.exec","container.files","container.images","container.delegate","artifact.export","deployment.reconcile","hello.invoke"],"provides":["agent.run","agent.approve","benchmark.run","benchmark.results","mesh.inspect"]},
+ {"name":"llm","principal":"llm","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay"],"provides":["llm.invoke","llm.models.list","mesh.inspect"]},
+ {"name":"llm-second","principal":"llm-second","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay"],"provides":["llm.invoke","llm.models.list","mesh.inspect"]},
+ {"name":"store","principal":"store","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay"],"provides":["session.store","workspace.files","events.write","stats.ingest","mesh.inspect"]},
+ {"name":"knowledge","principal":"knowledge","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay"],"provides":["memory.store","memory.search","secrets.resolve","skills.search","mesh.inspect"]},
+ {"name":"web","principal":"web","namespace":"default","scopes":["*"],"provides":["web.browser","mesh.inspect"],"bootstrap_password":true,"approver":true},
+ {"name":"telegram","principal":"telegram","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay","agent.*","session.read","session.write","session.delegate","artifact.export","container.delegate","events.read","events.delegate"],"provides":["adapter.telegram","mesh.inspect"]},
+ {"name":"executor","principal":"executor","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay","secrets.resolve","secrets.delegate"],"provides":["container.manage","container.exec","container.files","artifact.export","container.images","deployment.reconcile","mesh.inspect"]},
+ {"name":"relay","principal":"relay","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay"],"provides":["mesh.relay","mesh.inspect"]},
+ {"name":"remote-model","principal":"remote-model","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay"],"provides":["llm.invoke","llm.models.list","mesh.relay","mesh.inspect"]},
+ {"name":"chat","principal":"chat","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay","agent.run"],"provides":["mesh.inspect"]},
+ {"name":"hello-0","principal":"hello-0","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay","hello.invoke"],"provides":["hello.invoke","mesh.inspect"]},
+ {"name":"task-0","principal":"task-0","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay","hello.invoke"],"provides":["hello.invoke","mesh.inspect"]},
+ {"name":"task-1","principal":"task-1","namespace":"default","scopes":["mesh.peer","mesh.inspect","mesh.relay","hello.invoke"],"provides":["hello.invoke","mesh.inspect"]}
+]
