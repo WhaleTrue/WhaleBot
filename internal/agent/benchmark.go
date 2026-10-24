@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/internal/llm"
+	"github.com/WhaleTrue/WhaleBot/internal/llm"
 )
 
 type BenchmarkCase struct {

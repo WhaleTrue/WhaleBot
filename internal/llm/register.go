@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 func capability(id, path, method string, sem mesh.Semantics) mesh.Capability {

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 func policyExecutor(t *testing.T) (*Executor, ed25519.PrivateKey) {

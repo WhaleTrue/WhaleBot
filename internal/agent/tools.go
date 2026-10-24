@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/internal/llm"
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/internal/llm"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 type exportedTool struct {

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 func TestTrustedApprovalBindingConsumptionAndPersistence(t *testing.T) {

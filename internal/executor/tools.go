@@ -2,7 +2,7 @@ package executor
 
 import (
 	"encoding/json"
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 func attachTools(capabilities map[string]*mesh.Capability) {

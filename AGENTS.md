@@ -61,7 +61,7 @@ Root optional profiles: `executor`, `relay`, `telegram`, `multi-provider`, `exam
 
 ## Development and verification
 
-Go 1.26, Node 24, Docker Compose v2.24+ or v5. Use a single root Go module. Reuse SDK clients and strict JSON helpers; keep every network operation bounded and cancellable.
+Go 1.26, Node 24, Docker Compose v2.24+ or v5. Use the canonical root module `github.com/WhaleTrue/WhaleBot`; WhaleMesh is the product name, not a separate GitHub repository. Reuse SDK clients and strict JSON helpers; keep network operations bounded and cancellable.
 
 ```sh
 go test ./...

@@ -1,4 +1,4 @@
-module github.com/WhaleMesh/WhaleMesh
+module github.com/WhaleTrue/WhaleBot
 
 go 1.26
 

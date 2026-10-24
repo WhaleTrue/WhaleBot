@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/WhaleMesh/WhaleMesh/pkg/mesh"
+	"github.com/WhaleTrue/WhaleBot/pkg/mesh"
 )
 
 type IngestEvent struct {
