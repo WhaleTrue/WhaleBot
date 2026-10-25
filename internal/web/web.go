@@ -721,8 +721,8 @@ func prepareInput(user User, path string, input map[string]any) error {
 	if delegatedPath(path) && path != "/executor/deployments" {
 		input["owner"] = ownerKey(user)
 	}
-	if path == "/agent/run" {
-		id, _ := input["session_id"].(string)
+	id, _ := input["session_id"].(string)
+	if path == "/agent/run" || path == "/agent/approvals" || path == "/benchmark/e2e/prepare" || (path == "/benchmark/run" && id != "") {
 		prefix := ownerKey(user) + ":"
 		if id == "" {
 			var e error

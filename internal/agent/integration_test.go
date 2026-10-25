@@ -511,3 +511,19 @@ func TestStreamingUpstream429IsVisibleWithoutReplay(t *testing.T) {
 		t.Fatalf("stream hid rejection or replayed inference: calls=%d error=%v", calls.Load(), err)
 	}
 }
+
+func TestBenchmarkPreparationAdvertisesUnderExplicitSigningGrant(t *testing.T) {
+	network := liveNetwork(t, "agent", "caller")
+	grant := network.trust["agent"]
+	grant.Provides = []string{"agent.run", "agent.approve", "benchmark.run", "benchmark.e2e.prepare", "benchmark.results", "mesh.inspect"}
+	network.trust["agent"] = grant
+	network.node("agent", nil, Register)
+	caller := network.node("caller", nil, nil)
+	binding := liveBinding(t, caller, "benchmark.e2e.prepare")
+	if binding.Node.Identity.Principal != "agent" || binding.Capability.Endpoint != "/benchmark/e2e/prepare" {
+		t.Fatalf("preparation capability not discovered with explicit grant: %+v", binding)
+	}
+	if err := validateArguments(binding.Capability.InputSchema, json.RawMessage(`{"session_id":"bench","container_id":"owned"}`)); err != nil {
+		t.Fatal(err)
+	}
+}

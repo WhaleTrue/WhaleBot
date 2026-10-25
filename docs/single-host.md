@@ -35,13 +35,19 @@ docker compose --profile telegram up -d
 # Configure token and allowed users through the authenticated dashboard.
 docker compose --profile relay up -d
 # Local relay only; public operation requires TLS/reverse proxy configuration.
+# Linux: match the host Docker socket group before starting Executor.
+export DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
 docker compose --profile executor up -d
-# Grants this one container access to Docker Engine.
+# Grants only Executor access to Docker Engine via its supplementary group.
 docker compose --profile example build hello
 docker compose --profile example up -d hello
 ```
 
 All nodes use normal peer exchange. Docker DNS resolves bootstrap addresses; it does not maintain capability membership. Removing a seed after peers have exchanged does not remove the other peers' local registries.
+
+Executor stays UID 10001. On Linux, set `DOCKER_GID` to the numeric group of the Docker socket; the default `0` is only appropriate when that socket is actually group 0 (commonly Docker Desktop). Save the value in your local `.env` or export it for every Compose command that creates/recreates Executor. Do not `chmod 666` the socket, run Executor as root, or add socket mounts to other nodes to work around a mismatch. Rootless/custom Docker sockets require the matching mount path and group. A Docker permission error is a deployment prerequisite failure, not a reason to weaken authorization.
+
+For sequential local-model evaluation and scoped real E2E, see [Benchmark automation](benchmark-automation.md). Check the actual upstream health endpoint before claiming real-model verification; a refused connection or successful development Mock is not real inference evidence.
 
 ## Identity and trust changes
 

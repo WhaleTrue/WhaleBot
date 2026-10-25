@@ -1,5 +1,5 @@
 [
- {"name":"agent","principal":"agent","namespace":"default","scopes":["mesh.peer","mesh.inspect","session.read","session.write","session.delegate","llm.invoke","llm.models.list"],"provides":["agent.run","agent.approve","benchmark.run","benchmark.results"]},
+ {"name":"agent","principal":"agent","namespace":"default","scopes":["mesh.peer","mesh.inspect","session.read","session.write","session.delegate","llm.invoke","llm.models.list"],"provides":["agent.run","agent.approve","benchmark.run","benchmark.e2e.prepare","benchmark.results"]},
  {"name":"llm","principal":"llm","namespace":"default","scopes":["mesh.peer","mesh.inspect"],"provides":["llm.invoke","llm.models.list"]},
  {"name":"store","principal":"store","namespace":"default","scopes":["mesh.peer","mesh.inspect"],"provides":["session.store"]},
  {"name":"chat","principal":"chat","namespace":"default","scopes":["mesh.peer","mesh.inspect","agent.run"],"provides":[]}

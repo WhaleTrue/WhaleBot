@@ -94,7 +94,8 @@ go vet ./...
 go build ./...
 cd web && npm ci && npm run build && node --test src/api.test.js src/topology.test.js
 cd ..
-python scripts/acceptance.py
+export DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+python3 scripts/acceptance.py
 ```
 
 Acceptance owns a separate Compose project and isolated remote network. Real Docker tests exercise no-orchestrator chat, dynamic knowledge, provider coexistence/failure, managed nodes, authorization and relay recovery. Actual external model quality and Telegram delivery need real credentials; mock success is not evidence of those integrations.
@@ -108,6 +109,7 @@ Acceptance owns a separate Compose project and isolated remote network. Real Doc
 - [Schema contracts](docs/architecture/schema-contracts.md)
 - [Capability development](docs/developer-guide.md) and [Hello](examples/hello/README.md)
 - [Executor](internal/executor/README.md)
+- [Batch model benchmarks and score history](docs/benchmark-automation.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Legacy implementation audit](docs/architecture/legacy-audit.md) and [ADRs](docs/architecture/adr/)
 

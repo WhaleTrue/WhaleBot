@@ -6,6 +6,7 @@
   import Resource from './Resource.svelte';
   import Models from './Models.svelte';
   import Adapters from './Adapters.svelte';
+  import Benchmark from './Benchmark.svelte';
   let user = null;
   let username = 'admin';
   let password = '';
@@ -35,7 +36,6 @@
     Docker: { description: 'Manage Docker containers, images, deployments, execution and jobs. External image use requires a trusted signed approval, never a request boolean.', matches: c => /^(container\.|deployment\.)/.test(c.id) },
     Logs: { description: 'Query user-owned persisted events and execution logs. Use filters for session, event kind and cursor.', matches: c => c.id.startsWith('events.') || c.id === 'container.manage' },
     Stats: { description: 'Read persisted usage, message counts and tool activity for this user. Unavailable providers are reported, not replaced with fake totals.', matches: c => c.id.startsWith('stats.') },
-    Benchmark: { description: 'Run model and end-to-end benchmarks, inspect persisted results and remove runs. Results come from real capability calls.', matches: c => c.id.startsWith('benchmark.') },
     Tools: { description: 'Discover every advertised capability and operation. This is a scoped SDK console, not an arbitrary HTTP proxy.', matches: () => true }
   };
   async function refresh() { try { topology = await json('/api/topology'); } catch (e) { error = e.message; } }
@@ -63,6 +63,7 @@
 {#if tab === 'Chat'}<Chat {providers} />
 {:else if tab === 'Models'}<Models {providers} />
 {:else if tab === 'Adapters'}<Adapters {providers} />
+{:else if tab === 'Benchmark'}<Benchmark {providers} />
 {:else if tab === 'Topology'}<Topology {topology} {refresh} />
 {:else if tab === 'Account'}
 <section class="panel"><h2>Current identity</h2><p>Browser user: {user.username}</p><p>User ID: <code>{user.id}</code></p><p>Granted scopes: <code>{user.scopes.join(', ')}</code></p><p>Mesh principal: <code>{topology?.manifest?.identity?.principal || 'Not available'}</code></p><p class="hint">Mesh grants limit the backend. User scopes further limit browser actions. User passwords never authenticate Mesh peers.</p></section>

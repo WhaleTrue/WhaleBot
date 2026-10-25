@@ -160,6 +160,7 @@ func Register(node *mesh.Node, dataDir string) ([]mesh.Capability, error) {
 	node.Handle("POST", "/agent/run", []string{"agent.run"}, s.handleRun)
 	node.Handle("POST", "/agent/approvals", []string{"agent.approve"}, s.handleApproval)
 	node.Handle("POST", "/benchmark/run", []string{"benchmark.run"}, s.handleBenchmark)
+	node.Handle("POST", "/benchmark/e2e/prepare", []string{"benchmark.run"}, s.prepareBenchmarkE2E)
 	node.Handle("GET", "/benchmark/runs", []string{"benchmark.read"}, s.listBenchmarks)
 	node.Handle("DELETE", "/benchmark/runs", []string{"benchmark.delete"}, s.deleteBenchmarks)
 	node.Handle("DELETE", "/benchmark/runs/{id}", []string{"benchmark.delete"}, s.deleteBenchmarks)
@@ -178,6 +179,11 @@ func Register(node *mesh.Node, dataDir string) ([]mesh.Capability, error) {
 	bench.Scopes = []string{"benchmark.run"}
 	bench.InputSchema = mesh.JSONSchemaFor(benchmarkRequest{})
 	bench.OutputSchema = mesh.JSONSchemaFor(Benchmark{})
+	prepare := cap("benchmark.e2e.prepare", "/benchmark/e2e/prepare", "POST", mesh.Semantics{ReadOnly: true})
+	prepare.Scopes = []string{"benchmark.run"}
+	prepare.Operations[0].Scopes = []string{"benchmark.run"}
+	prepare.InputSchema = mesh.JSONSchemaFor(benchmarkE2ERequest{})
+	prepare.OutputSchema = mesh.JSONSchemaFor(benchmarkE2EPreparation{})
 	results := cap("benchmark.results", "/benchmark/runs", "GET", mesh.Semantics{ReadOnly: true, Idempotent: true})
 	results.Operations[0].Scopes = []string{"benchmark.read"}
 	results.Scopes = []string{"benchmark.read", "benchmark.delete"}
@@ -186,7 +192,7 @@ func Register(node *mesh.Node, dataDir string) ([]mesh.Capability, error) {
 		Runs []Benchmark `json:"runs"`
 	}{})
 	results.Operations = append(results.Operations, mesh.Operation{Name: "delete", Method: "DELETE", Path: "/benchmark/runs", Scopes: []string{"benchmark.delete"}, Semantics: mesh.Semantics{Mutating: true}}, mesh.Operation{Name: "delete.one", Method: "DELETE", Path: "/benchmark/runs/{id}", Scopes: []string{"benchmark.delete"}, Semantics: mesh.Semantics{Mutating: true}})
-	capabilities := []mesh.Capability{run, approve, bench, results}
+	capabilities := []mesh.Capability{run, approve, bench, prepare, results}
 	for i := range capabilities {
 		capabilities[i].Attributes = map[string]string{"state_id": stateID, "stateful": "true", "persistence": "local-volume"}
 	}

@@ -58,6 +58,7 @@ Root optional profiles: `executor`, `relay`, `telegram`, `multi-provider`, `exam
 - Resolver inspection is read-only. `Candidates` plus exact `providers` allowlist supports catalog filtering before a real policy choice. Local self-provided capabilities are not dependency cycles. Keep stable requirement IDs for stateful data.
 - Model runs freeze provider/profile/catalog revision. Unspecified selection allows only explicit free models; provider enforces `free_only` and revision before inference. Configuration changes fail instead of silently changing cost/model mid-run.
 - Executor runs UID 10001 with socket supplementary `DOCKER_GID`; owned-volume initializer alone uses CHOWN/FOWNER. Workloads remain UID 65532, read-only root and no added capabilities.
+- Before enabling Executor on Linux, set `DOCKER_GID` from `stat -c '%g' /var/run/docker.sock` in the local `.env` or exported Compose environment. The default 0 is not portable. Keep UID 10001 and supplementary-group socket access; never loosen socket permissions or run the service as root to mask a mismatch.
 
 ## Development and verification
 
@@ -74,6 +75,10 @@ python scripts/acceptance.py
 ```
 
 Do not claim a command passed unless its output was observed. Real upstream/Telegram verification needs external credentials; mock tests are not proof of those integrations. Browser changes require actual browser verification, not just frontend compilation.
+
+Benchmark uses the Mesh `benchmark.run` / `benchmark.results` capabilities and exact advertised operations, not old unauthenticated APIs. Current case set `mesh-v4.1` preserves history columns `scores.total` (Daily score), `plan_gate`, `tool_call`, `react`, `bonus`, and optional `e2e`; Bonus/E2E never affect Daily score. The dedicated Benchmark page highlights the latest case set, de-emphasizes historical versions, and selects Best only among completed results in the latest case set. Persisted scores are never recalculated during display. Keep start/poll/details/delete/clear, per-run/all JSON, CSV and the advanced capability console working together.
+
+E2E preparation returns fresh nonce-bound build and independent verification tool calls. Review and approve each exact call through `agent.approve`, then run with the returned nonce/session/container. Use one existing approved user-owned container with separate build/run directories; never claim a two-container deployment or recreate old UserDocker authority. Read [docs/benchmark-automation.md](docs/benchmark-automation.md) before batch model evaluation. Development Mock, refused upstream connections and simulated cases are not real-model or real-Docker verification.
 
 ## Graphify (mandatory)
 

@@ -36,6 +36,35 @@ func TestUserBoundary(t *testing.T) {
 		t.Fatal("users share owner")
 	}
 }
+func TestBenchmarkApprovalSessionBoundary(t *testing.T) {
+	alice, bob := User{ID: "alice"}, User{ID: "bob"}
+	for _, supplied := range []string{"benchmark-session", ownerKey(alice) + ":benchmark-session", ownerKey(bob) + ":benchmark-session"} {
+		var session string
+		for _, path := range []string{"/benchmark/e2e/prepare", "/agent/approvals", "/benchmark/run", "/agent/run"} {
+			input := map[string]any{"session_id": supplied}
+			if err := prepareInput(alice, path, input); err != nil {
+				t.Fatal(err)
+			}
+			id := input["session_id"].(string)
+			if session == "" {
+				session = id
+			}
+			if id != session || input["owner"] != ownerKey(alice) {
+				t.Fatalf("%s uses a different approval boundary: %#v", path, input)
+			}
+			if id == ownerKey(bob)+":benchmark-session" {
+				t.Fatal("another user's session forwarded")
+			}
+		}
+	}
+	input := map[string]any{}
+	if err := prepareInput(alice, "/benchmark/run", input); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := input["session_id"]; ok {
+		t.Fatal("non-E2E benchmark creates an unused session")
+	}
+}
 func TestCookieCSRFBoundary(t *testing.T) {
 	s := &server{users: []User{{ID: "alice"}}, sessions: map[string]loginSession{"token": {UserID: "alice", CSRF: "csrf", Expires: time.Now().Add(time.Hour)}}}
 	handler := s.protect(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) })

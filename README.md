@@ -106,7 +106,8 @@ npm ci
 npm run build
 node --test src/api.test.js src/topology.test.js
 cd ..
-python scripts/acceptance.py
+export DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+python3 scripts/acceptance.py
 ```
 
 验收使用单独 Compose project 与隔离网络，验证无 orchestrator 聊天、动态知识、多模型 Provider、故障恢复、真实动态容器、权限边界和 Relay 重连。真实 Telegram 与外部模型质量验证需要自己的凭据，不会用 Mock 成功替代。
@@ -120,6 +121,7 @@ python scripts/acceptance.py
 - [Schema 合同](docs/architecture/schema-contracts.md)
 - [Capability 开发](docs/developer-guide.md) 与 [Hello 示例](examples/hello/README.md)
 - [Executor](internal/executor/README.md)
+- [Benchmark 批量模型评测与历史分数](docs/benchmark-automation.md)
 - [故障排查](docs/troubleshooting.md)
 - [旧实现审计](docs/architecture/legacy-audit.md) 与 [ADR](docs/architecture/adr/)
 
