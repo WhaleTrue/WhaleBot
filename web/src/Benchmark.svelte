@@ -176,5 +176,23 @@
 <details><summary>Advanced capability JSON console</summary><Resource title="Benchmark" description="Inspect advertised contracts and scopes, send structured JSON and download exact responses. The backend enforces user ownership and operation authorization." providers={benchmarkProviders} /></details>
 
 <style>
-  .check{display:flex;align-items:center;gap:.6rem;margin:1rem 0}.check input{width:auto;margin:0}.table-scroll{overflow-x:auto;max-width:100%}table{width:100%;border-collapse:collapse;text-align:left;font-size:.85rem}th,td{padding:.9rem .7rem;border-bottom:1px solid #28374f;vertical-align:top}thead th{color:#aebed7;font-weight:600;white-space:nowrap}tbody th{font-weight:500}small{display:block;margin-top:.3rem}.number,.daily{font-variant-numeric:tabular-nums;white-space:nowrap}.daily>strong{font-size:1.25rem}.latest{font-size:.9rem;font-weight:750;border-color:#5ddbb5}.historical{color:#a9bad4;font-size:.8rem}.model-name{display:block;max-width:16rem;overflow-wrap:anywhere}.actions{min-width:16rem;gap:.4rem}.actions button{min-height:44px}.cases{font-size:.8rem}.evidence{max-width:40rem;white-space:pre-wrap;overflow-wrap:anywhere}h3{margin-top:1rem}form>.row{margin-top:1rem}
+  .check{display:flex;align-items:center;gap:.6rem;margin:1rem 0}
+  .check input{width:auto;margin:0}
+  .table-scroll{max-width:100%}
+  table{width:100%;border-collapse:collapse;text-align:left;font-size:var(--text-ui)}
+  th,td{padding:.9rem .7rem;border-bottom:1px solid var(--color-base-300);vertical-align:top}
+  thead th{color:var(--color-text-muted);font-weight:600}
+  tbody th{font-weight:500}
+  small{display:block;margin-top:.375rem}
+  .number,.daily{font-variant-numeric:tabular-nums}
+  .daily>strong{font-size:var(--text-section)}
+  .latest{font-size:var(--text-meta);font-weight:600;border-color:var(--color-success)}
+  .historical{color:var(--color-text-muted);font-size:var(--text-meta)}
+  .model-name{display:block;max-width:16rem;overflow-wrap:anywhere}
+  .actions{gap:.5rem}
+  .actions button{min-height:44px}
+  .cases{font-size:var(--text-ui)}
+  .evidence{max-width:40rem;white-space:pre-wrap;overflow-wrap:anywhere}
+  h3{margin-top:1rem}
+  form>.row{margin-top:1rem}
 </style>

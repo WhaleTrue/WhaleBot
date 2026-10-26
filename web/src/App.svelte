@@ -7,13 +7,14 @@
   import Models from './Models.svelte';
   import Adapters from './Adapters.svelte';
   import Benchmark from './Benchmark.svelte';
+  import Nodes from './Nodes.svelte';
   let user = null;
   let username = 'admin';
   let password = '';
   let error = '';
   let loading = true;
   let topology = null;
-  let tab = 'Chat';
+  let tab = 'Nodes';
   let currentPassword = '';
   let newPassword = '';
   let accountName = '';
@@ -23,7 +24,7 @@
   let image = '';
   let approvalResult = null;
   let executorNode = '';
-  const pages = ['Chat', 'Topology', 'Sessions', 'Models', 'Adapters', 'Skills', 'Secrets', 'Workspace', 'Artifacts', 'Docker', 'Logs', 'Stats', 'Benchmark', 'Tools', 'Account'];
+  const pages = ['Nodes', 'Chat', 'Topology', 'Sessions', 'Models', 'Adapters', 'Skills', 'Secrets', 'Workspace', 'Artifacts', 'Docker', 'Logs', 'Stats', 'Benchmark', 'Tools', 'Account'];
   $: providers = getProviders(topology);
   $: resources = {
     Sessions: { description: 'Private session history, message context and lifecycle.', matches: c => c.id === 'session.store' },
@@ -57,10 +58,11 @@
 {:else if !user}
 <main class="login"><section class="panel"><div class="brand">W</div><h1>WhaleMesh</h1><p>Autonomous capability mesh</p><form on:submit|preventDefault={login}><label>Username<input bind:value={username} autocomplete="username" required /></label><label>Password<input type="password" bind:value={password} autocomplete="current-password" required /></label><button>Sign in</button></form>{#if error}<p class="error" role="alert">{error}</p>{/if}<p class="hint">No default password. Retrieve the bootstrap password from your web node identity volume. Browser identity is separate from Mesh node trust.</p></section></main>
 {:else}
-<div class="shell"><nav><a class="wordmark" href="#Chat" on:click={() => tab = 'Chat'}><span class="brand">W</span>WhaleMesh</a><small class="mesh-label">CAPABILITY MESH</small>{#each pages as page}<button class:active={tab === page} on:click={() => { tab = page; error = ''; }}>{page}</button>{/each}<div class="nav-user"><strong>{user.username}</strong><small>Browser user</small><button on:click={logout}>Sign out</button></div></nav>
+<div class="shell"><nav aria-label="Main navigation"><a class="wordmark" href="#Nodes" on:click={() => tab = 'Nodes'}><span class="brand">W</span>WhaleMesh</a>{#each pages as page}<button class:active={tab === page} aria-current={tab === page ? 'page' : undefined} on:click={() => { tab = page; error = ''; }}>{page}</button>{/each}<div class="nav-user"><strong>{user.username}</strong><small>Browser user</small><button on:click={logout}>Sign out</button></div></nav>
 <main><header><div><h1>{tab}</h1><p>{topology?.manifest?.identity?.namespace || 'Mesh'} · {topology?.peers?.length || 0} discovered peers · {providers.length} capabilities</p></div><span class="badge">{topology?.manifest?.lifecycle?.ready ? 'Node ready' : 'Connecting'}</span></header>
 {#if error}<div class="error" role="alert">{error}<button on:click={() => error = ''}>Dismiss</button></div>{/if}
-{#if tab === 'Chat'}<Chat {providers} />
+{#if tab === 'Nodes'}<Nodes {topology} {providers} {refresh} />
+{:else if tab === 'Chat'}<Chat {providers} />
 {:else if tab === 'Models'}<Models {providers} />
 {:else if tab === 'Adapters'}<Adapters {providers} />
 {:else if tab === 'Benchmark'}<Benchmark {providers} />

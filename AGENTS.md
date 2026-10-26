@@ -20,7 +20,8 @@ This is the Big Bang rewrite of WhaleBot as a capability-based autonomous Docker
 - `internal/providers`: consolidated durable session, memory/search, encrypted secrets, skills, confined workspace/artifacts, optional events/statistics.
 - `internal/executor`: the only Engine client and privileged deployment boundary. Controls only namespace/owner resources labeled with its public-key fingerprint. Deployment has a minimal `node` template, never a running manifest.
 - `internal/relay`: optional authenticated outbound yamux transport; destination retains authorization.
-- `internal/web`, `web`: cookie-authenticated user backend and Svelte 5/Vite 8 dashboard/chat/topology. Provider selectors reflect actual providers; model profiles retain explicit cost/features and permit no active model.
+- `internal/web`, `web`: cookie-authenticated user backend and Svelte 5/Vite 8 dashboard/chat/topology. The xianii-theme-inspired Nodes tile grid is the home page; node editors stay bound to the full selected identity. Topology uses a vertical node-focused relationship browser, not a crossing-edge canvas. Desktop spacing is primary; mobile needs basic usability only. Provider selectors reflect actual providers; model profiles retain explicit cost/features and permit no active model.
+- Frontend typography uses shared role tokens and a self-hosted Inter Latin variable font with adjacent SIL OFL license. Keep the Xianii reference family, system CJK fallbacks, browser text scaling and 13px minimum dense metadata. Do not reintroduce per-component arbitrary type ramps or runtime font CDNs.
 - `internal/telegram`: optional outbound Telegram adapter with independent user/session identity.
 - `cmd/node`: embeds deployment-selected capability bundles; no business capability selectors in SDK.
 - `cmd/bootstrap`: one-shot separate key provisioning, not an online mesh service.

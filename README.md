@@ -71,7 +71,7 @@ docker compose --profile relay up -d
 
 Agent 的 ReAct、工具调用、上下文、检索注入、秘密引用、审批、结构化事件、usage 和 Benchmark 均使用 Mesh SDK。模型 Provider 支持独立多实例、多个持久配置模型、OpenAI tool calling、SSE 与超时。推理不自动重放，包括 HTTP 429、传输失败与部分流响应；不会偷偷返回 Mock 或切换到收费模型。
 
-持久能力包括 Session、Memory Notes/Search、加密 Secret、版本化 Skills/ZIP 导入、隔离 Workspace/Artifact、事件与统计。Svelte WebUI 提供真实动态拓扑、能力/依赖/绑定详情、聊天、会话、模型与适配器配置，以及存储、Docker、日志、统计、Benchmark 管理。Telegram 保留命令、会话轮换、进度、错误和产物发送。
+持久能力包括 Session、Memory Notes/Search、加密 Secret、版本化 Skills/ZIP 导入、隔离 Workspace/Artifact、事件与统计。Svelte WebUI 参考 [xianii-theme](https://github.com/Nigh/xianii-theme)，默认显示平铺节点首页；点击节点可进入该节点实际提供的模型、适配器设置或能力操作。Topology 按节点纵向浏览能力、依赖与绑定，候选关系按需展开，无需横向滚动。聊天、会话、存储、Docker、日志、统计、Benchmark 管理保持可用。移动端保证基本可用，重点优化桌面控件布局与间距。Telegram 保留命令、会话轮换、进度、错误和产物发送。
 
 Executor 接收 Deployment 期望状态，只操作自身授权标签的资源。动态容器使用与固定容器相同的 Node 协议，使用预先授权的独立身份池。默认禁止宿主机目录、Docker Socket 转交、特权容器和危险网络。外部镜像需要不可变 digest 与可信管理员签名审批；模型不能自行宣称用户批准。
 
