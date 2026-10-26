@@ -6,6 +6,8 @@ Everything is Docker. Every Docker is an Equal Mesh Node. The Architecture Emerg
 
 [中文](README.md) · [Architecture](docs/architecture/overview.md) · [Schemas](docs/architecture/schema-contracts.md) · [Capability development](docs/developer-guide.md)
 
+**Branches:** `dev` retains pre-rewrite WhaleBot (`e71dbdf`); `v3` contains the complete WhaleMesh rewrite and all subsequent development. These versions are incompatible; do not merge the rewrite back into `dev`.
+
 WhaleMesh replaces WhaleBot `dev`'s centralized registration, proxy chain and special UserDocker protocol. Every business container embeds the same node protocol, owns a local verified membership/capability view, and resolves dependencies by capability rather than a fixed service role. There is no mandatory central orchestrator, membership database, Executor, Relay or dashboard.
 
 Protocol equality does not imply equal host privileges. Only an explicitly authorized Executor can access Docker Engine. Advertising `container.manage` cannot grant Engine access or administrator rights.

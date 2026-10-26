@@ -6,6 +6,8 @@ Everything is Docker. Every Docker is an Equal Mesh Node. The Architecture Emerg
 
 [English](README.en.md) · [架构](docs/architecture/overview.md) · [协议与 Schema](docs/architecture/schema-contracts.md) · [开发指南](docs/developer-guide.md)
 
+**分支约定：** `dev` 保留重构前的 WhaleBot（`e71dbdf`）；`v3` 承载 WhaleMesh 全量重构及后续开发。两个版本不兼容，重构内容不再合并回 `dev`。
+
 WhaleMesh 将 WhaleBot `dev` 的中心化注册、代理与 UserDocker 协议整体替换为同一种 Node 协议。每个节点独立维护可信成员、能力与依赖视图。节点按能力、版本、作用域和策略直接协作；没有全局必需的 orchestrator、数据库、Executor、Relay 或管理面板。
 
 协议平等不等于权限相同。只有受授权的 Executor 能访问 Docker Engine。声明 `container.manage` 不会获得 Docker Socket 或管理员权限。

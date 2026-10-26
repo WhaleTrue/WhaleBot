@@ -7,7 +7,9 @@
 3. `docs/architecture/overview.md`, schema/SDK code, component READMEs.
 4. Root Chinese and English READMEs.
 
-This is the Big Bang rewrite of WhaleBot `dev` as a capability-based autonomous Docker mesh. No old wire/API/database compatibility is intended. Do not recreate a central orchestrator, registration client, role enum or special UserDocker identity. Deployment bundle names are not protocol roles. A new capability must require no core role list or central routing-table change.
+WhaleMesh development continues on `v3`. The `dev` branch retains the pre-rewrite WhaleBot version at `e71dbdf`; do not merge the incompatible Mesh rewrite back into `dev`. The four rewrite/benchmark commits are rebased onto that shared base on `v3`, without the former PR #41 merge commit.
+
+This is the Big Bang rewrite of WhaleBot as a capability-based autonomous Docker mesh. No old wire/API/database compatibility is intended. Do not recreate a central orchestrator, registration client, role enum or special UserDocker identity. Deployment bundle names are not protocol roles. A new capability must require no core role list or central routing-table change.
 
 ## Repository map
 
